@@ -107,7 +107,7 @@ svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; 
 
 @media (orientation: landscape) {
   .hud {
-    grid-template-columns: minmax(190px, 25vw) minmax(0, 1fr) minmax(190px, 25vw);
+    grid-template-columns: minmax(176px, 19vw) minmax(0, 1fr) minmax(176px, 19vw);
     grid-template-rows: auto auto minmax(0, 1fr) auto;
     grid-template-areas: "brand stage settings" "level stage controls" "stats stage controls" ". stage credit";
     padding-bottom: max(var(--pad), env(safe-area-inset-bottom));

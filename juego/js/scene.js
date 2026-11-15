@@ -401,7 +401,7 @@ export function createScene(canvas, hooks = {}) {
   function fitCamera() {
     if (!n) return;
     const st = stage || { x: 0, y: 0, w: W, h: H };
-    const E = (n + 2 * FRAME) * 1.2 + 0.4;
+    const E = (n + 2 * FRAME) * 1.13 + 0.35;
     const t = Math.tan((camera.fov * Math.PI) / 360);
     const usable = Math.max(120, Math.min(st.w, st.h * 1.04));
     const D = (E * H) / (usable * 2 * t);
@@ -628,22 +628,27 @@ export function createScene(canvas, hooks = {}) {
     if (reduced()) { kick(); return Promise.resolve(); }
     const st = marbles.map((m, i) => ({ delay: 0.05 + i * 0.11, vy: 0, done: pos[i] === DONE }));
     marbles.forEach((m, i) => { if (!st[i].done) { m.y = 7 + i; syncMarble(m); } });
+    let acc = 0;
+    const DT = 1 / 240;
     return run((dt) => {
+      acc += dt;
       let all = true;
-      marbles.forEach((m, i) => {
-        const s = st[i];
-        if (s.done) return;
-        all = false;
-        if (s.delay > 0) { s.delay -= dt; return; }
-        s.vy -= 52 * dt; m.y += s.vy * dt;
-        if (m.y <= R) {
-          m.y = R;
-          const sp = -s.vy;
-          if (sp > 1.4) { hooks.onImpact && hooks.onImpact('land', sp); s.vy = sp * 0.3; }
-          else { s.vy = 0; s.done = true; }
-        }
-        syncMarble(m);
-      });
+      while (acc >= DT) { // paso fijo: el rebote no depende de los fps
+        acc -= DT;
+        marbles.forEach((m, i) => {
+          const s = st[i];
+          if (s.done) return;
+          if (s.delay > 0) { s.delay -= DT; return; }
+          s.vy -= 52 * DT; m.y += s.vy * DT;
+          if (m.y <= R) {
+            m.y = R;
+            const sp = -s.vy;
+            if (sp > 1.4) { hooks.onImpact && hooks.onImpact('land', sp); s.vy = sp * 0.3; }
+            else { s.vy = 0; s.done = true; }
+          }
+        });
+      }
+      marbles.forEach((m, i) => { if (!st[i].done) all = false; syncMarble(m); });
       return all;
     });
   }
