@@ -13,6 +13,7 @@ const DEFAULTS = {
   progress: {},  // { id: índice de paso } del modo paso a paso
   timers: {},    // { 'id|paso': { end, left, total, running } }
   sound: true,
+  stage: 's',    // tamaño de la escena del paso a paso: 'off', 's' o 'l'
   calc: null,    // último estado de la calculadora
 };
 
