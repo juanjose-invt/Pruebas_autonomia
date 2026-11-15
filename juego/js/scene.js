@@ -101,11 +101,12 @@ function marbleCanvas(hex, seed) {
   grd.addColorStop(0, '#' + col.getHexString()); grd.addColorStop(0.5, '#' + deep.getHexString()); grd.addColorStop(1, '#' + col.getHexString());
   g.fillStyle = grd; g.fillRect(0, 0, w, h);
   // vetas de "ojo de gato"
-  for (let i = 0; i < 4; i++) {
-    const y0 = h * (0.2 + 0.2 * i) + (r() - 0.5) * 10, amp = 10 + r() * 14, ph = r() * 6.28;
-    g.strokeStyle = i % 2 ? '#fffdf5' : '#' + lite.getHexString();
-    g.globalAlpha = i % 2 ? 0.8 : 0.7;
-    g.lineWidth = 5 + r() * 9;
+  g.filter = 'blur(2.5px)';
+  for (let i = 0; i < 3; i++) {
+    const y0 = h * (0.25 + 0.25 * i) + (r() - 0.5) * 10, amp = 12 + r() * 14, ph = r() * 6.28;
+    g.strokeStyle = i === 1 ? '#fffdf5' : '#' + lite.getHexString();
+    g.globalAlpha = i === 1 ? 0.75 : 0.6;
+    g.lineWidth = 7 + r() * 10;
     g.beginPath();
     for (let x = -8; x <= w + 8; x += 6) {
       const y = y0 + Math.sin((x / w) * 6.283 * 2 + ph) * amp;
@@ -113,6 +114,7 @@ function marbleCanvas(hex, seed) {
     }
     g.stroke();
   }
+  g.filter = 'none';
   g.globalAlpha = 1;
   return c;
 }
