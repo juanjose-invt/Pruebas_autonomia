@@ -8,7 +8,7 @@ export const SY = 2.4;        // alto de celda
 export const BELOW = 0.7;    // parte de la celda que queda bajo la balda (canto + etiqueta)
 const CAP = 110;              // monedas con el tarro lleno hasta el borde (100 % del presupuesto)
 const OVER = 10;              // monedas que se desbordan a la balda
-const COIN_R = 0.13;
+const COIN_R = 0.14;
 const COIN_H = 0.034;
 const FOV = 22;
 const PITCH = (7 * Math.PI) / 180;
@@ -30,7 +30,7 @@ function coinSlots(seed) {
   const e = new THREE.Euler();
   for (let L = 0; L < layers; L++) {
     const y = 0.035 + L * dy;
-    const narrow = y > 1.06 ? 0.2 : y > 0.96 ? 0.27 : 0.33;
+    const narrow = y > 1.06 ? 0.2 : y > 0.96 ? 0.27 : 0.35;
     const a0 = r() * Math.PI * 2;
     for (let k = 0; k < 5; k++) {
       let x = 0, z = 0;
@@ -177,13 +177,13 @@ export function createScene(canvas, { reducedMotion = false, onLost } = {}) {
       '#include <opaque_fragment>',
       `float fres = pow(1.0 - abs(dot(normalize(normal), normalize(vViewPosition))), 2.2);
        float lumi = max(max(outgoingLight.r, outgoingLight.g), outgoingLight.b);
-       diffuseColor.a = clamp(0.04 + 0.5 * pow(fres, 0.75) + 0.75 * smoothstep(0.7, 1.5, lumi), 0.0, 0.95);
+       diffuseColor.a = clamp(0.03 + 0.5 * pow(fres, 1.3) + 0.8 * smoothstep(0.55, 1.4, lumi), 0.0, 0.95);
        #include <opaque_fragment>`
     );
   };
-  const glassBack = new THREE.MeshStandardMaterial({ color: 0xb9d3c8, roughness: 0.06, metalness: 0, transparent: true, depthWrite: false, side: THREE.BackSide, envMapIntensity: 0.55 });
+  const glassBack = new THREE.MeshStandardMaterial({ color: 0x62786f, roughness: 0.06, metalness: 0, transparent: true, depthWrite: false, side: THREE.BackSide, envMapIntensity: 0.55 });
   glassBack.onBeforeCompile = glassPatch;
-  const glassFront = new THREE.MeshStandardMaterial({ color: 0xcfe6dc, roughness: 0.04, metalness: 0, transparent: true, depthWrite: false, side: THREE.FrontSide, envMapIntensity: 1.0 });
+  const glassFront = new THREE.MeshStandardMaterial({ color: 0x6f857c, roughness: 0.04, metalness: 0, transparent: true, depthWrite: false, side: THREE.FrontSide, envMapIntensity: 1.0 });
   glassFront.onBeforeCompile = glassPatch;
   const coinMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.38, metalness: 1, envMapIntensity: 1.35 });
   const blobMat = new THREE.MeshBasicMaterial({ map: blobTex, transparent: true, depthWrite: false });

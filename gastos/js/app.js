@@ -122,10 +122,10 @@ function fallbackJar(fill) {
   let coins = '';
   for (let i = 0; i < n; i++) {
     const row = Math.floor(i / 5), k = i % 5;
-    const x = 22 + k * 14 + ((row * 7 + k * 3) % 5) - 2 + (row % 2 ? 4 : 0);
+    const x = 25 + k * 12 + ((row * 7 + k * 3) % 5) - 2 + (row % 2 ? 3 : 0);
     const y = 118 - row * 7.2;
     const tone = ['#E9B23A', '#F3C955', '#D9962B', '#C9703A', '#E9B23A'][(i * 7 + row) % 5];
-    coins += `<ellipse cx="${x}" cy="${y}" rx="9.5" ry="3.6" fill="${tone}" stroke="#8a5a14" stroke-width=".8"/>`;
+    coins += `<ellipse cx="${x}" cy="${y}" rx="8.5" ry="3.4" fill="${tone}" stroke="#8a5a14" stroke-width=".8"/>`;
   }
   let spill = '';
   if (fill > 1) {
@@ -445,6 +445,8 @@ function renderEntry() {
   el.entrySave.textContent = t(entry.id ? 'entry.save.changes' : entry.type === 'income' ? 'entry.save.income' : 'entry.save.expense');
   el.entryDelete.hidden = !entry.id;
   el.entry.dataset.type = entry.type;
+  const on = $('.chip[aria-pressed=true]', el.chips);
+  if (on) el.chips.scrollLeft = Math.max(0, on.offsetLeft - el.chips.offsetLeft - 18);
 }
 
 function syncSel() {

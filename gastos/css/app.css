@@ -135,9 +135,9 @@ html[data-gl='off'] .jar::before {
   background: linear-gradient(#cf8f55, #a8692f); box-shadow: 0 10px 14px rgba(20, 6, 2, 0.35);
 }
 .tag {
-  position: absolute; left: 50%; top: 78%; width: min(88%, 156px);
+  position: absolute; left: 50%; top: 78%; width: min(94%, 156px);
   transform: translateX(-50%);
-  background: var(--sheet); border-radius: 3px; padding: 4px 6px 5px;
+  background: var(--sheet); border-radius: 3px; padding: 4px 4px 5px;
   box-shadow: 0 2px 4px rgba(20, 6, 2, 0.45);
   display: grid; text-align: center; line-height: 1.15;
   transition: transform 0.2s var(--ease), box-shadow 0.2s;
@@ -254,16 +254,17 @@ html[data-gl='off'] .jar::before {
 .entry-head h2 { font-size: 20px; font-weight: 700; }
 .entry .seg { justify-self: start; }
 .amount { display: flex; align-items: baseline; gap: 8px; border-bottom: 2px solid var(--ink); padding-bottom: 2px; }
-.amount input {
+.amount input#amount {
+  height: auto; border-radius: 0;
   flex: 1; min-width: 0; width: 100%; background: none; border: 0; padding: 0; text-align: right;
   font-size: clamp(46px, 9vw, 60px); font-weight: 750; letter-spacing: -0.03em; line-height: 1.1;
   font-variation-settings: 'opsz' 96; caret-color: transparent; cursor: default;
 }
-.amount input.zero { color: rgba(43, 21, 16, 0.45); }
-.amount input:focus-visible { outline: none; }
+.amount input#amount.zero { color: rgba(43, 21, 16, 0.45); }
+.amount input#amount:focus-visible { outline: none; }
 .amount:focus-within { border-bottom-color: var(--madder); box-shadow: 0 2px 0 var(--madder); }
 .amount-cur { font-size: 28px; font-weight: 650; color: var(--ink-2); }
-.entry[data-type='income'] .amount input:not(.zero) { color: var(--green); }
+.entry[data-type='income'] .amount input#amount:not(.zero) { color: var(--green); }
 .entry-err { color: var(--alert); font-weight: 600; font-size: 15px; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .chip {
@@ -386,7 +387,7 @@ input::placeholder { color: rgba(43, 21, 16, 0.55); }
 }
 @media (max-height: 700px) and (max-width: 620px) {
   .keys button { height: 44px; }
-  .amount input { font-size: 40px; }
+  .amount input#amount { font-size: 40px; }
 }
 
 /* ---------- dos columnas: tablet apaisada y escritorio ---------- */
@@ -398,7 +399,9 @@ input::placeholder { color: rgba(43, 21, 16, 0.55); }
   .sheet { min-height: 0; overflow: hidden; padding-bottom: 0; box-shadow: -14px 0 30px rgba(30, 8, 2, 0.35); }
   .scroll { overflow-y: auto; }
   .panel { flex: none; max-width: none; }
-  .foot { margin-top: auto; padding-bottom: 88px; }
+  .foot { margin-top: auto; padding: 18px clamp(8px, 1.6vw, 20px) 22px; text-align: left; }
+  .balance .bal-main dd { font-size: clamp(38px, 4.2vw, 56px); }
+  .balance { flex-wrap: nowrap; gap: clamp(14px, 2vw, 32px); }
   .entry {
     position: absolute; inset: 0; left: 0; width: auto; max-height: none; transform: none; border-radius: 0;
     box-shadow: none; padding: 18px clamp(18px, 2.4vw, 30px) 20px; align-content: start; gap: 14px;
@@ -415,7 +418,7 @@ input::placeholder { color: rgba(43, 21, 16, 0.55); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+  *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; }
   .entry, .toast { animation: fade-in 0.18s linear; }
   @keyframes fade-in { from { opacity: 0; } }
 }

@@ -14,7 +14,7 @@ export function categoryBars(rows, { fmt, t }) {
       <span class="bar-name">${escapeHtml(r.name)}</span>
       <span class="bar-val"><b>${fmt(r.spent)}</b> <span>${detail}</span></span>
       <span class="bar-track" aria-hidden="true">
-        <span class="bar-fill" style="width:${w.toFixed(2)}%;background:${r.color}"></span>
+        ${r.spent > 0 ? `<span class="bar-fill" style="width:${w.toFixed(2)}%;background:${r.color}"></span>` : ''}
         ${tick === null ? '' : `<span class="bar-tick" style="left:${tick.toFixed(2)}%"></span>`}
       </span>
     </li>`;
@@ -76,7 +76,7 @@ export function monthBars({ months, width, fmtShort, labels }) {
       return `<g class="${m.current ? 'cur' : ''}">
         <rect class="inc" x="${(cx - bw - 1.5).toFixed(1)}" y="${(base - hi).toFixed(1)}" width="${bw.toFixed(1)}" height="${hi.toFixed(1)}" rx="3"><title>${escapeHtml(labels.income)}: ${escapeHtml(m.incomeFull)}</title></rect>
         <rect class="exp" x="${(cx + 1.5).toFixed(1)}" y="${(base - he).toFixed(1)}" width="${bw.toFixed(1)}" height="${he.toFixed(1)}" rx="3"><title>${escapeHtml(labels.expense)}: ${escapeHtml(m.expenseFull)}</title></rect>
-        ${small ? '' : `<text class="val" x="${cx.toFixed(1)}" y="${(Math.min(base - hi, base - he) - 6).toFixed(1)}" text-anchor="middle">${escapeHtml(fmtShort(m.income - m.expense, true))}</text>`}
+        ${small || (!m.income && !m.expense) ? '' : `<text class="val" x="${cx.toFixed(1)}" y="${(Math.min(base - hi, base - he) - 6).toFixed(1)}" text-anchor="middle">${escapeHtml(fmtShort(m.income - m.expense, true))}</text>`}
         <text class="tick" x="${cx.toFixed(1)}" y="${H - 9}" text-anchor="middle">${escapeHtml(m.label)}</text>
       </g>`;
     }).join('')}
