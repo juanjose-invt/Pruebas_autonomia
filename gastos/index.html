@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Huchas — gastos del mes</title>
+<meta name="description" content="Gestor de gastos personales: cada categoría es un tarro de cristal que se llena de monedas. Funciona sin conexión y guarda los datos solo en tu navegador.">
+<meta name="theme-color" content="#6F281C">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="preload" href="fonts/bricolage-grotesque-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div class="app" id="app">
+
+  <section class="wall" id="wall" aria-labelledby="monthLabel">
+    <header class="top">
+      <div class="top-row">
+        <h1 class="brand">Huchas</h1>
+        <div class="lang" role="group" data-i18n-aria="lang.label">
+          <button type="button" data-lang="es" aria-pressed="true">ES</button>
+          <button type="button" data-lang="en" aria-pressed="false">EN</button>
+        </div>
+      </div>
+      <div class="month">
+        <button type="button" class="round" id="prevMonth" data-i18n-aria="month.prev">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+        </button>
+        <h2 id="monthLabel" aria-live="polite"></h2>
+        <button type="button" class="round" id="nextMonth" data-i18n-aria="month.next">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+        </button>
+        <button type="button" class="back-today" id="todayMonth" hidden data-i18n="month.today"></button>
+      </div>
+      <dl class="balance">
+        <div class="bal-main"><dt data-i18n="bal.balance"></dt><dd id="balTotal"></dd></div>
+        <div><dt data-i18n="bal.income"></dt><dd id="balIncome"></dd></div>
+        <div><dt data-i18n="bal.expense"></dt><dd id="balExpense"></dd></div>
+      </dl>
+    </header>
+
+    <div class="shelves" id="shelves">
+      <canvas id="gl" aria-hidden="true"></canvas>
+      <div class="jars" id="jars"></div>
+    </div>
+    <p class="hint" id="hint"></p>
+  </section>
+
+  <section class="sheet" id="sheet">
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" id="tab-moves" aria-controls="panel" aria-selected="true" data-tab="moves" data-i18n="tab.moves"></button>
+      <button type="button" role="tab" id="tab-charts" aria-controls="panel" aria-selected="false" tabindex="-1" data-tab="charts" data-i18n="tab.charts"></button>
+      <button type="button" role="tab" id="tab-cats" aria-controls="panel" aria-selected="false" tabindex="-1" data-tab="cats" data-i18n="tab.cats"></button>
+      <button type="button" role="tab" id="tab-settings" aria-controls="panel" aria-selected="false" tabindex="-1" data-tab="settings" data-i18n="tab.settings"></button>
+    </div>
+    <div class="scroll" id="scroll">
+    <div class="panel" id="panel" role="tabpanel" aria-labelledby="tab-moves" tabindex="-1"></div>
+    <footer class="foot">
+      <a class="sign" href="../">by innovativecode</a>
+    </footer>
+    </div>
+
+    <form class="entry" id="entry" hidden novalidate aria-labelledby="entryTitle">
+      <h2 id="entryTitle" class="sr"></h2>
+      <div class="entry-head">
+        <div class="seg" role="group">
+          <button type="button" data-type="expense" aria-pressed="true" data-i18n="entry.expense"></button>
+          <button type="button" data-type="income" aria-pressed="false" data-i18n="entry.income"></button>
+        </div>
+        <button type="button" class="round dark" id="entryClose" data-i18n-aria="entry.close">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+      <label class="amount">
+        <span class="sr" data-i18n="entry.amount"></span>
+        <input id="amount" type="text" inputmode="none" readonly autocomplete="off" value="0">
+        <span class="amount-cur" id="amountCur" aria-hidden="true"></span>
+      </label>
+      <p class="entry-err" id="entryErr" role="alert" hidden></p>
+      <div class="chips" id="chips" role="group" data-i18n-aria="entry.category"></div>
+      <div class="keys" id="keys">
+        <button type="button" data-k="1">1</button><button type="button" data-k="2">2</button><button type="button" data-k="3">3</button>
+        <button type="button" data-k="4">4</button><button type="button" data-k="5">5</button><button type="button" data-k="6">6</button>
+        <button type="button" data-k="7">7</button><button type="button" data-k="8">8</button><button type="button" data-k="9">9</button>
+        <button type="button" data-k="." id="keySep">,</button><button type="button" data-k="0">0</button>
+        <button type="button" data-k="back" data-i18n-aria="entry.backspace">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11v12H9l-6-6zM12 9.5l5 5M17 9.5l-5 5"/></svg>
+        </button>
+      </div>
+      <div class="entry-extra">
+        <label><span data-i18n="entry.date"></span><input type="date" id="entryDate" required></label>
+        <label><span data-i18n="entry.note"></span><input type="text" id="entryNote" maxlength="120" autocomplete="off" data-i18n-ph="entry.note.ph"></label>
+      </div>
+      <div class="entry-actions">
+        <button type="button" class="btn ghost danger" id="entryDelete" hidden data-i18n="entry.delete"></button>
+        <button type="submit" class="btn primary" id="entrySave"></button>
+      </div>
+    </form>
+  </section>
+
+  <button type="button" class="fab" id="fab">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+    <span data-i18n="add"></span>
+  </button>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden>
+    <span id="toastMsg"></span>
+    <button type="button" id="toastAct" hidden></button>
+  </div>
+</div>
+<noscript><p style="padding:24px;font-family:sans-serif">Huchas necesita JavaScript para funcionar. / Huchas needs JavaScript to work.</p></noscript>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
