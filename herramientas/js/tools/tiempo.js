@@ -217,8 +217,9 @@ export function mount(raiz) {
       return h('div', { class: 'paso' }, h('label', { class: 'rot', for: id }, etiqueta),
         h('div', { class: 'paso__fila' },
           h('button', { type: 'button', class: 'paso__b', 'aria-label': `${t.menos}: ${etiqueta}`, onclick: () => poner(pomo.cfg[clave] - 1) }, icon('menos', 20)),
-          input, h('span', { class: 'paso__u' }, unidad),
-          h('button', { type: 'button', class: 'paso__b', 'aria-label': `${t.mas}: ${etiqueta}`, onclick: () => poner(pomo.cfg[clave] + 1) }, icon('mas', 20))));
+          input,
+          h('button', { type: 'button', class: 'paso__b', 'aria-label': `${t.mas}: ${etiqueta}`, onclick: () => poner(pomo.cfg[clave] + 1) }, icon('mas', 20)),
+          h('span', { class: 'paso__u' }, unidad)));
     }
 
     cuerpo.replaceChildren(
