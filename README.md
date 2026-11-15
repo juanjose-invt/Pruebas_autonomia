@@ -1,7 +1,7 @@
 # Cuaderno de campo
 
 Portfolio personal con blog, by innovativecode. Vive en la raíz de este repositorio y enlaza
-cuatro aplicaciones que están en sus propias carpetas:
+ocho aplicaciones que están en sus propias carpetas:
 
 | Carpeta | Qué es |
 | --- | --- |
@@ -9,6 +9,10 @@ cuatro aplicaciones que están en sus propias carpetas:
 | `kanban/` | Tablero de corcho y pósits |
 | `juego/` | Puzle de gravedad con tablero de madera y canicas |
 | `herramientas/` | Caja de herramientas tipo navaja: conversor, QR, contraseñas, cronómetro/pomodoro, notas |
+| `presupuestos/` | Generador gratuito de presupuestos en PDF; puerta de entrada a [Ofiza](https://ofiza.es), un SaaS para autónomos |
+| `panel/` | Panel de datos instantáneo a partir de un CSV o un Excel, sin que los datos salgan del dispositivo; estética de risografía |
+| `escaner/` | Escáner de tickets y documentos con reconocimiento de texto en el dispositivo; estética de mesa de escáner |
+| `pizza/` | Guía de masas de pizza con calculadora, recetas configurables y paso a paso en 3D; estética de pizzería napolitana |
 
 El portfolio es un sitio estático bilingüe (español e inglés) que se genera con un script de Node
 sin dependencias y se publica en GitHub Pages.
@@ -97,7 +101,7 @@ node scripts/build.mjs
 ```
 
 Esto crea la carpeta `_site/` (ignorada por git) con el portfolio en la raíz y una copia de
-`gastos/`, `kanban/`, `juego/` y `herramientas/`. Para verlo:
+las ocho carpetas de las apps (las que existan; si falta alguna, el build la omite y lo avisa). Para verlo:
 
 ```
 python3 -m http.server 8105
@@ -124,7 +128,7 @@ scripts/lib/markdown.mjs   conversor de Markdown a HTML
 scripts/lib/perfil.mjs     lector de contenido/perfil.md
 scripts/lib/bocetos.mjs    bocetos de los proyectos, dibujados en SVG
 .github/workflows/         publicación en GitHub Pages
-gastos/ kanban/ juego/ herramientas/   las cuatro aplicaciones (sin paso de build)
+gastos/ kanban/ juego/ herramientas/ presupuestos/ panel/ escaner/ pizza/   las ocho aplicaciones (sin paso de build)
 ```
 
 Todas las rutas del sitio son relativas, porque se publica dentro de una subcarpeta. La fuente
