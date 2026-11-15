@@ -126,16 +126,21 @@ function barChart(W, spec, res, ctx) {
     const by = yy + (rowH - bh) / 2;
     const xa = x(Math.min(0, Number.isNaN(v) ? 0 : v)), xb = x(Math.max(0, Number.isNaN(v) ? 0 : v));
     const sel = ctx.selected;
-    const isSel = !sel || sel.has(res.keys[i]);
+    const isSel = (!sel || sel.has(res.keys[i])) && res.keys[i] !== OTHERS_KEY;
     const w = Math.max(Number.isNaN(v) ? 0 : 1, xb - xa);
-    if (isSel) pink += `<rect x="${r1(xa)}" y="${r1(by)}" width="${r1(w)}" height="${r1(bh)}" fill="${INK.pink}"/>`;
+    if (isSel) {
+      pink += `<rect x="${r1(xa)}" y="${r1(by)}" width="${r1(w)}" height="${r1(bh)}" fill="${INK.pink}"/>`;
+      // remate azul en el extremo del valor: marca exacta y contraste suficiente
+      const xe = r1(v < 0 ? xa : xb);
+      if (!Number.isNaN(v)) blue += `<line x1="${xe}" x2="${xe}" y1="${r1(by)}" y2="${r1(by + bh)}" stroke="${INK.blue}" stroke-width="2"/>`;
+    }
     else blue += `<rect x="${r1(xa) + 0.5}" y="${r1(by) + 0.5}" width="${r1(Math.max(0, w - 1))}" height="${r1(bh - 1)}" fill="url(#riso-dots-blue)" stroke="${INK.blue}" stroke-width="1"/>`;
     const lab = clip(labels[i], labW, 13);
     blue += `<text x="${x0 - 10}" y="${r1(yy + rowH / 2)}" dy="0.35em" text-anchor="end" font-size="13" font-weight="${isSel && sel ? 700 : 500}" fill="${INK.blue}">${esc(lab)}${lab !== labels[i] ? `<title>${esc(labels[i])}</title>` : ''}</text>`;
     const vt = fmtNum(v, ctx.unit);
     const tw = textWidth(vt, 12, 650);
     const inside = xb + tw + 8 > x1;
-    blue += `<text x="${r1(inside ? xb - 6 : xb + 6)}" y="${r1(yy + rowH / 2)}" dy="0.35em" text-anchor="${inside ? 'end' : 'start'}" font-size="12" font-weight="650" fill="${INK.blue}" style="font-variant-numeric:tabular-nums">${esc(vt)}</text>`;
+    blue += `<text x="${r1(inside ? xb - 6 : xb + 6)}" y="${r1(yy + rowH / 2)}" dy="0.35em" text-anchor="${inside ? 'end' : 'start'}" font-size="12" font-weight="650" fill="${INK.blue}"${inside ? ` paint-order="stroke" stroke="${INK.paper}" stroke-width="3.5" stroke-linejoin="round"` : ''} style="font-variant-numeric:tabular-nums">${esc(vt)}</text>`;
     hits += `<rect class="hit" data-i="${i}" x="0" y="${yy}" width="${W}" height="${rowH}" fill="transparent"/>`;
     items.push({ title: labels[i], lines: [[ctx.measureLabel, vt], [t('axis.count'), fmtNum(s0.counts[i])]], key: res.keys[i] });
   }
@@ -154,7 +159,7 @@ function bandChart(W, H, spec, res, ctx) {
   const all = res.series.flatMap((s) => s.values.filter((v) => !Number.isNaN(v)));
   const zero = type !== 'line' || ['sum', 'count'].includes(spec.agg);
   const sc = niceScale(all.length ? Math.min(...all) : 0, all.length ? Math.max(...all) : 1, H < 250 ? 4 : 5, zero);
-  const top = 28, bottom = 44;
+  const top = 28, bottom = res.kind === 'category' ? 56 : 44;
   const x0 = Math.ceil(yTickWidth(sc, ctx.unit) + 14), x1 = W - 14;
   const step = (x1 - x0) / Math.max(1, n);
   const y = (v) => H - bottom - ((v - sc.lo) / (sc.hi - sc.lo)) * (H - bottom - top);
@@ -165,10 +170,22 @@ function bandChart(W, H, spec, res, ctx) {
   let yellow = '', pink = '', blue = yAxis(sc, x0, x1, y, ctx.unit, ctx.valueTitle), blueFill = '', hits = '';
   // rótulos del eje X sin solaparse
   const maxLab = Math.max(...short.map((s) => textWidth(s, 12)), 10);
-  const every = Math.max(1, Math.ceil((Math.min(maxLab, 110) + 14) / step));
+  // categorías: todas rotuladas (en dos líneas si hace falta); periodos: se salta rótulos para no solapar
+  const wrapCat = res.kind === 'category' && step >= 44;
+  const every = wrapCat ? 1 : Math.max(1, Math.ceil((Math.min(maxLab, 110) + 14) / step));
   for (let i = 0; i < n; i += every) {
-    const lab = clip(short[i], Math.max(step * every - 8, 30), 12);
-    blue += `<text x="${r1(cx(i))}" y="${H - bottom + 17}" text-anchor="middle" font-size="12" font-weight="500" fill="${INK.blue}">${esc(lab)}</text>`;
+    let lines;
+    if (wrapCat) {
+      const maxW = step - 6;
+      const words = String(short[i]).split(/\s+/);
+      let a = '', k = 0;
+      while (k < words.length && textWidth((a ? a + ' ' : '') + words[k], 11.5) <= maxW) { a = (a ? a + ' ' : '') + words[k]; k++; }
+      if (!a) { a = clip(words[0], maxW, 11.5); k = 1; }
+      const rest = words.slice(k).join(' ');
+      lines = rest ? [a, clip(rest, maxW, 11.5)] : [a];
+    } else lines = [clip(short[i], Math.max(step * every - 8, 30), 12)];
+    const full = labels[i];
+    blue += `<text x="${r1(cx(i))}" y="${H - bottom + 17}" text-anchor="middle" font-size="${wrapCat ? 11.5 : 12}" font-weight="500" fill="${INK.blue}">${lines.map((l, li) => `<tspan x="${r1(cx(i))}" dy="${li ? '1.15em' : 0}">${esc(l)}</tspan>`).join('')}${lines.join(' ') !== full ? `<title>${esc(full)}</title>` : ''}</text>`;
     blue += `<line x1="${r1(cx(i))}" x2="${r1(cx(i))}" y1="${H - bottom}" y2="${H - bottom + 4}" stroke="${INK.blue}"/>`;
   }
   blue += xTitle(W, H, ctx.dimTitle);
@@ -185,10 +202,14 @@ function bandChart(W, H, spec, res, ctx) {
         const ya = y(Math.max(0, v)), yb = y(Math.min(0, v));
         const h = Math.max(v === 0 ? 0 : 1, yb - ya);
         const sel = ctx.selected;
-        const isSel = !sel || sel.has(res.keys[i]);
+        const isSel = (!sel || sel.has(res.keys[i])) && res.keys[i] !== OTHERS_KEY;
         const rect = `x="${r1(xx)}" y="${r1(ya)}" width="${r1(Math.max(1, bw - (nS > 1 ? 1.5 : 0)))}" height="${r1(h)}"`;
         if (!isSel) { blue += `<rect ${rect} fill="url(#riso-dots-blue)" stroke="${INK.blue}" stroke-width="1"/>`; return; }
-        if (st.ink === 'pink') pink += `<rect ${rect} fill="${INK.pink}"/>`;
+        if (st.ink === 'pink') {
+          pink += `<rect ${rect} fill="${INK.pink}"/>`;
+          const ye = r1(v < 0 ? yb : ya);
+          blue += `<line x1="${r1(xx)}" x2="${r1(xx + Math.max(1, bw - (nS > 1 ? 1.5 : 0)))}" y1="${ye}" y2="${ye}" stroke="${INK.blue}" stroke-width="2"/>`;
+        }
         else if (st.ink === 'yellow') { yellow += `<rect ${rect} fill="${INK.yellow}"/>`; blue += `<rect ${rect} fill="none" stroke="${INK.blue}" stroke-width="1"/>`; }
         else { blueFill += `<rect ${rect} fill="url(#riso-hatch-blue)"/>`; blue += `<rect ${rect} fill="none" stroke="${INK.blue}" stroke-width="1"/>`; }
       });
@@ -197,7 +218,7 @@ function bandChart(W, H, spec, res, ctx) {
     if (nS === 1 && n <= 16) {
       res.series[0].values.forEach((v, i) => {
         if (Number.isNaN(v)) return;
-        const vt = fmtAxis(v, ctx.unit, Math.abs(v) >= 100 ? 1 : 0.01);
+        const vt = Math.abs(v) >= 10000 ? fmtAxis(v, ctx.unit, 1) : fmtNum(v, ctx.unit);
         if (textWidth(vt, 11, 650) > step - 2) return;
         blue += `<text x="${r1(cx(i))}" y="${r1(y(Math.max(0, v)) - 5)}" text-anchor="middle" font-size="11" font-weight="650" fill="${INK.blue}" style="font-variant-numeric:tabular-nums">${esc(vt)}</text>`;
       });
@@ -212,7 +233,7 @@ function bandChart(W, H, spec, res, ctx) {
       if (cur.length) segs.push(cur);
       for (const seg of segs) {
         const d = seg.map((p, k) => `${k ? 'L' : 'M'}${r1(p[0])} ${r1(p[1])}`).join('');
-        if (type === 'area' || nS === 1) {
+        if (type === 'area') {
           const area = `${d}L${r1(seg[seg.length - 1][0])} ${r1(base)}L${r1(seg[0][0])} ${r1(base)}Z`;
           if (nS === 1) yellow += `<path d="${area}" fill="${INK.yellow}"/>`;
           else if (st.ink === 'pink') pink += `<path d="${area}" fill="${INK.pink}" fill-opacity="0.62"/>`;
@@ -285,12 +306,17 @@ function histChart(W, H, spec, res, ctx) {
     const ya = y(b.count);
     const rect = `x="${r1(xa)}" y="${r1(ya)}" width="${r1(Math.max(0.5, xb - xa))}" height="${r1(H - bottom - ya)}"`;
     if (b.count) { yellow += `<rect ${rect} fill="${INK.yellow}"/>`; dots += `<rect ${rect} fill="url(#riso-dots-blue)"/>`; blue += `<rect ${rect} fill="none" stroke="${INK.blue}" stroke-width="1"/>`; }
-    const range = `${fmtNum(b.x0, ctx.unit)} – ${fmtNum(b.x1, ctx.unit)}`;
+    const range = res.integer ? fmtNum(b.x0 + 0.5, ctx.unit) : `${fmtNum(b.x0, ctx.unit)} – ${fmtNum(b.x1, ctx.unit)}`;
     items.push({ title: range, lines: [[t('axis.freq'), fmtNum(b.count)]] });
     hits += `<rect class="hit" data-i="${i}" x="${r1(x(b.x0))}" y="${top}" width="${r1(x(b.x1) - x(b.x0))}" height="${H - bottom - top}" fill="transparent"/>`;
   });
   // eje X numérico
   const xs = niceScale(lo, hi, Math.max(2, Math.floor((x1 - x0) / 90)), false);
+  if (res.integer) {
+    const st = Math.max(1, Math.ceil(niceStep(hi - lo, Math.max(2, Math.floor((x1 - x0) / 60)))));
+    xs.step = st; xs.ticks = [];
+    for (let v = Math.ceil(lo / st) * st; v <= hi; v += st) xs.ticks.push(v);
+  }
   for (const v of xs.ticks) {
     if (v < lo - 1e-9 || v > hi + 1e-9) continue;
     blue += `<text x="${r1(x(v))}" y="${H - bottom + 17}" text-anchor="middle" font-size="12" font-weight="500" fill="${INK.blue}" style="font-variant-numeric:tabular-nums">${esc(fmtAxis(v, ctx.unit, xs.step))}</text>`;

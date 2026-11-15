@@ -827,7 +827,7 @@ export function createScene(canvas, opts = {}) {
       api.pause(); clearProps();
       dg.geo.dispose(); Object.values(M).forEach((m) => m.dispose()); Object.values(tex).forEach((x) => x.dispose());
       counter.geometry.dispose(); counter.material.dispose(); wall.geometry.dispose(); wall.material.dispose();
-      renderer.dispose();
+      renderer.dispose(); renderer.forceContextLoss();
     },
   };
   void current;

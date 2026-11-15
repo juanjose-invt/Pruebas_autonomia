@@ -91,9 +91,9 @@ const T = {
     },
     bake: {
       title: 'Hornear',
-      round: (p) => `Con el horno encendido al menos ${p.preheat} min antes: cubre la pizza y hornéala sobre ${p.surface}, a ${p.bakeTemp}, durante ${p.bakeTime}. Gírala a mitad de cocción. Está cuando el borde se ha hinchado y tiene manchas tostadas.`,
-      pan: (p) => `Con el horno encendido al menos ${p.preheat} min antes: hornea en ${p.surface}, a ${p.bakeTemp}, durante ${p.bakeTime}. Está cuando la base se despega sola y suena crujiente al rascarla.`,
-      rolled: (p) => `Con el horno encendido al menos ${p.preheat} min antes: pasa la base a ${p.surface}, cúbrela con pocos ingredientes y hornea a ${p.bakeTemp} durante ${p.bakeTime}, hasta que el borde esté dorado.`,
+      round: (p) => `Con el horno encendido al menos ${p.preheat} min antes: cubre la pizza y hornéala sobre ${p.surface}. Temperatura: ${p.bakeTemp}. Tiempo: ${p.bakeTime}. Gírala a mitad de cocción. Está cuando el borde se ha hinchado y tiene manchas tostadas.`,
+      pan: (p) => `Con el horno encendido al menos ${p.preheat} min antes: hornea en ${p.surface}. Temperatura: ${p.bakeTemp}. Tiempo: ${p.bakeTime}. Está cuando la base se despega sola y suena crujiente al rascarla.`,
+      rolled: (p) => `Con el horno encendido al menos ${p.preheat} min antes: pasa la base a ${p.surface}, cúbrela con pocos ingredientes y hornea. Temperatura: ${p.bakeTemp}. Tiempo: ${p.bakeTime}. Está cuando el borde se ve dorado.`,
     },
     and: ' y ',
     pieces: (n, g) => (n === 1 ? `una pieza de ${g}` : `${n} piezas de ${g}`),
@@ -189,9 +189,9 @@ const T = {
     },
     bake: {
       title: 'Bake',
-      round: (p) => `With the oven on for at least ${p.preheat} min beforehand: top the pizza and bake it on ${p.surface}, at ${p.bakeTemp}, for ${p.bakeTime}. Turn it halfway. It is done when the rim has puffed up and shows toasted spots.`,
-      pan: (p) => `With the oven on for at least ${p.preheat} min beforehand: bake in ${p.surface}, at ${p.bakeTemp}, for ${p.bakeTime}. It is done when the base releases by itself and sounds crisp when scraped.`,
-      rolled: (p) => `With the oven on for at least ${p.preheat} min beforehand: move the base to ${p.surface}, top it sparingly and bake at ${p.bakeTemp} for ${p.bakeTime}, until the edge is golden.`,
+      round: (p) => `With the oven on for at least ${p.preheat} min beforehand: top the pizza and bake it on ${p.surface}. Temperature: ${p.bakeTemp}. Time: ${p.bakeTime}. Turn it halfway. It is done when the rim has puffed up and shows toasted spots.`,
+      pan: (p) => `With the oven on for at least ${p.preheat} min beforehand: bake in ${p.surface}. Temperature: ${p.bakeTemp}. Time: ${p.bakeTime}. It is done when the base releases by itself and sounds crisp when scraped.`,
+      rolled: (p) => `With the oven on for at least ${p.preheat} min beforehand: move the base to ${p.surface}, top it sparingly and bake. Temperature: ${p.bakeTemp}. Time: ${p.bakeTime}. It is done when the edge looks golden.`,
     },
     and: ' and ',
     pieces: (n, g) => (n === 1 ? `one piece of ${g}` : `${n} pieces of ${g}`),
@@ -214,13 +214,36 @@ function joinList(items, and) {
 export const isPan = (r) => r.shape === 'pan-rect' || r.shape === 'pan-round';
 
 // Pasos generados. `overrides` permite al planificador alargar o acortar las esperas.
-export function buildSteps(r, lang = 'es', overrides = {}) {
-  if (Array.isArray(r.steps) && r.steps.length) {
-    return r.steps.map((s, i) => ({ ...s, id: s.id || 'c' + i, minutes: overrides[s.id || 'c' + i] ?? s.minutes, custom: true }));
+// Nombres de las cantidades que se pueden insertar en un paso personalizado.
+export const TOKENS = {
+  es: { mainFlour: 'harina', mainWater: 'agua', mainYeast: 'levadura', salt: 'sal', oil: 'aceite', sugar: 'azucar', prefFlour: 'harina_prefermento', prefWater: 'agua_prefermento', prefYeast: 'levadura_prefermento', ball: 'bola' },
+  en: { mainFlour: 'flour', mainWater: 'water', mainYeast: 'yeast', salt: 'salt', oil: 'oil', sugar: 'sugar', prefFlour: 'preferment_flour', prefWater: 'preferment_water', prefYeast: 'preferment_yeast', ball: 'ball' },
+};
+export function fillTokens(text, c, lang) {
+  if (typeof text !== 'string' || !text.includes('{')) return text;
+  const val = { ...c.g, ball: Math.round(c.total / c.pizzas) };
+  return text.replace(/\{([a-z_]+)\}/gi, (m, name) => {
+    for (const map of [TOKENS.es, TOKENS.en]) {
+      const key = Object.keys(map).find((k) => map[k] === name.toLowerCase());
+      if (key) return fmtG(val[key], lang);
+    }
+    return m;
+  });
+}
+
+export function buildSteps(r, lang = 'es', overrides = {}, opts = {}) {
+  const c = compute(r);
+  if (Array.isArray(r.steps) && r.steps.length && !opts.ignoreCustom) {
+    return r.steps.map((s, i) => {
+      const id = s.id || 'c' + i;
+      return { ...s, id, text: fillTokens(s.text, c, lang), minutes: overrides[id] ?? s.minutes, custom: true };
+    });
   }
   const L = T[lang] || T.es;
-  const c = compute(r);
-  const g = (v) => fmtG(v, lang);
+  // En modo "tokens" las cantidades se escriben como {harina}, {agua}… para que un paso
+  // personalizado siga recalculándose al cambiar la receta.
+  const tk = opts.tokens ? TOKENS[lang] || TOKENS.es : null;
+  const g = (v, key) => (tk && key ? `{${tk[key]}}` : fmtG(v, lang));
   const pl = r.plan || {};
   const pan = isPan(r);
   const leavened = r.leaven !== 'none' && r.leaven !== 'powder';
@@ -229,16 +252,16 @@ export function buildSteps(r, lang = 'es', overrides = {}) {
     yeastName: L.yeastName[r.leaven] || '',
     prefName: L.prefName[r.pref] || '', prefThe: L.prefThe[r.pref] || '', prefAll: L.prefAll[r.pref] || '',
     waterName: L.water[r.waterTemp === 'warm' ? 'warm' : 'cool'],
-    mainFlour: g(c.g.mainFlour), mainWater: g(c.g.mainWater), mainYeast: g(c.g.mainYeast),
-    prefFlour: g(c.g.prefFlour), prefWater: g(c.g.prefWater), prefYeast: g(c.g.prefYeast),
-    salt: g(c.g.salt),
-    sugarBit: c.g.sugar > 0 ? L.sugarBit(g(c.g.sugar)) : '',
-    oilBit: c.g.oil > 0 ? L.oilBit(g(c.g.oil)) : '',
-    mainYeastBit: c.g.mainYeast > 0 ? L.mainYeastBit(g(c.g.mainYeast), L.yeastName[r.leaven]) : '',
+    mainFlour: g(c.g.mainFlour, 'mainFlour'), mainWater: g(c.g.mainWater, 'mainWater'), mainYeast: g(c.g.mainYeast, 'mainYeast'),
+    prefFlour: g(c.g.prefFlour, 'prefFlour'), prefWater: g(c.g.prefWater, 'prefWater'), prefYeast: g(c.g.prefYeast, 'prefYeast'),
+    salt: g(c.g.salt, 'salt'),
+    sugarBit: c.g.sugar > 0 ? L.sugarBit(g(c.g.sugar, 'sugar')) : '',
+    oilBit: c.g.oil > 0 ? L.oilBit(g(c.g.oil, 'oil')) : '',
+    mainYeastBit: c.g.mainYeast > 0 ? L.mainYeastBit(g(c.g.mainYeast, 'mainYeast'), L.yeastName[r.leaven]) : '',
     prefTemp: loc(pl.prefTemp, lang) || (lang === 'en' ? '18–20 °C' : '18–20 °C'),
     room: L.room, fridge: L.fridge,
     folds: pl.folds, foldEvery: pl.foldEvery, kneadMin: pl.knead,
-    pieces: L.pieces(c.pizzas, g(roundBall(c))),
+    pieces: L.pieces(c.pizzas, g(roundBall(c), 'ball')),
     size: loc(r.size, lang) || (lang === 'en' ? 'the size you want' : 'el tamaño que quieras'),
     preheat: r.preheat || 30,
     surface: loc(r.surface, lang), bakeTemp: loc(r.bakeTemp, lang), bakeTime: loc(r.bakeTime, lang),
@@ -265,9 +288,9 @@ export function buildSteps(r, lang = 'es', overrides = {}) {
     const bits = [];
     if (auto && c.hasPref) bits.push(p.prefAll);
     if (auto && c.g.mainYeast > 0) bits.push(L.yeastDissolved(p.mainYeast, p.yeastName));
-    if (auto && c.g.sugar > 0) bits.push(L.sugarOf(g(c.g.sugar)));
+    if (auto && c.g.sugar > 0) bits.push(L.sugarOf(g(c.g.sugar, 'sugar')));
     bits.push(L.saltOf(p.salt));
-    if (c.g.oil > 0) bits.push(L.oilOf(g(c.g.oil)));
+    if (c.g.oil > 0) bits.push(L.oilOf(g(c.g.oil, 'oil')));
     const list = joinList(bits, L.and);
     if (wet) {
       add('salt', 'mix', L.salt.title, L.salt.text({ ...p, addBits: list }), 5, { variant: 'pinch' });

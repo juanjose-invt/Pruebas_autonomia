@@ -80,7 +80,7 @@ svg { display: block; }
   color: var(--pink);
   mix-blend-mode: multiply;
   transform: translate(0.05em, 0.035em);
-  z-index: -1;
+  z-index: 1;
   -webkit-mask-image: var(--grain); mask-image: var(--grain);
   -webkit-mask-size: 192px; mask-size: 192px;
   pointer-events: none;
@@ -135,7 +135,7 @@ main { flex: 1; outline: none; }
   font-weight: 820; line-height: 0.98; letter-spacing: -0.035em;
   margin: 8px 0 18px;
 }
-.hero-ink { display: inline; }
+.hero-ink { display: block; }
 .lead { font-size: clamp(17px, 2vw, 20px); max-width: 60ch; font-weight: 480; }
 
 .drop {
@@ -230,9 +230,9 @@ main { flex: 1; outline: none; }
 
 /* cifras clave */
 .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px 28px; padding: 22px 0 6px; }
-.kpi { position: relative; border-top: 2px solid var(--blue); padding: 10px 52px 8px 0; min-width: 0; }
+.kpi { container-type: inline-size; position: relative; border-top: 2px solid var(--blue); padding: 10px 52px 8px 0; min-width: 0; }
 .kpi-label { font-size: 15px; font-weight: 650; line-height: 1.25; }
-.kpi-value { display: block; font-size: clamp(2rem, 4.4vw, 3.1rem); font-weight: 820; letter-spacing: -0.03em; line-height: 1.08; margin-top: 6px; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kpi-value { display: block; font-size: clamp(1.7rem, 15cqi, 3.1rem); font-weight: 820; letter-spacing: -0.03em; line-height: 1.08; margin-top: 6px; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .kpi-sub { font-size: 13.5px; font-weight: 520; margin-top: 4px; opacity: 0.9; }
 .kpi .btn.icon { position: absolute; top: 6px; right: 0; width: 44px; min-height: 44px; border-color: transparent; }
 .kpi .btn.icon:hover { border-color: var(--blue); }
@@ -299,7 +299,7 @@ main { flex: 1; outline: none; }
 .search .ic { position: absolute; left: 12px; top: 14px; width: 20px; height: 20px; fill: none; stroke: var(--blue); stroke-width: 2; }
 .search input { width: 100%; min-height: 48px; padding: 0 14px 0 42px; border: 1.5px solid var(--blue); border-radius: var(--r); background: var(--paper); font-size: 16px; }
 .table-sheet > .note { margin-top: 6px; }
-.table-scroll { margin-top: 14px; overflow: auto; max-height: 70vh; border: 1.5px solid var(--blue); border-radius: var(--r); background: var(--paper); }
+.table-scroll { position: relative; margin-top: 14px; overflow: auto; max-height: 70vh; border: 1.5px solid var(--blue); border-radius: var(--r); background: var(--paper); }
 .table-scroll table { border-collapse: separate; border-spacing: 0; width: max-content; min-width: 100%; font-size: 14.5px; font-variant-numeric: tabular-nums; }
 .table-scroll th { position: sticky; top: 0; z-index: 1; background: var(--paper-2); border-bottom: 1.5px solid var(--blue); padding: 0; text-align: left; }
 .table-scroll th.num { text-align: right; }

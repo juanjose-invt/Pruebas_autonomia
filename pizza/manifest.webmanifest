@@ -1,0 +1,17 @@
+{
+  "name": "Impasto, guía de masas de pizza",
+  "short_name": "Impasto",
+  "description": "Recetario, calculadora, planificador y paso a paso en 3D para masas de pizza. Funciona sin conexión.",
+  "lang": "es",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#FBF6EA",
+  "theme_color": "#C5301E",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

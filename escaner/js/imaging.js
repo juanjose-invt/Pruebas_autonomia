@@ -73,6 +73,20 @@ export async function renderPdfPage(doc, n) {
 }
 
 // ---------- geometría ----------
+function borderColor(src) {
+  const n = 24;
+  const c = makeCanvas(n, n);
+  const g = c.getContext('2d', { willReadFrequently: true });
+  g.drawImage(src, 0, 0, n, n);
+  const d = g.getImageData(0, 0, n, n).data;
+  let r = 0, gg = 0, b = 0, k = 0;
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+    if (x > 0 && y > 0 && x < n - 1 && y < n - 1) continue;
+    const o = (y * n + x) * 4;
+    r += d[o]; gg += d[o + 1]; b += d[o + 2]; k++;
+  }
+  return `rgb(${Math.round(r / k)},${Math.round(gg / k)},${Math.round(b / k)})`;
+}
 export function rotated(src, rot90, angleDeg) {
   const rad = ((rot90 + angleDeg) * Math.PI) / 180;
   const cos = Math.abs(Math.cos(rad)), sin = Math.abs(Math.sin(rad));
@@ -80,7 +94,9 @@ export function rotated(src, rot90, angleDeg) {
   const h = src.width * sin + src.height * cos;
   const c = makeCanvas(w, h);
   const g = c.getContext('2d');
-  g.fillStyle = '#fff';
+  // Las esquinas que deja el giro se rellenan con el color del borde de la foto
+  // (blanco en un escaneo, el de la mesa en una foto), para no inventar «papel».
+  g.fillStyle = borderColor(src);
   g.fillRect(0, 0, c.width, c.height);
   g.translate(c.width / 2, c.height / 2);
   g.rotate(rad);
@@ -139,15 +155,15 @@ function small(src, maxSide) {
 // Busca el ángulo que hace más «nítidas» las filas de texto: proyección horizontal
 // de los píxeles oscuros con la varianza más alta.
 export function detectSkew(src, range = 15) {
-  const c = small(src, 900);
+  // Se recorren todos los píxeles de una copia pequeña: muestrear en rejilla crearía
+  // un falso máximo en 0° (los puntos de la rejilla caen alineados).
+  const c = small(src, 640);
   const gray = grayOf(c);
   const W = c.width, H = c.height;
-  // Fondo normalizado para que sombras y bordes de mesa no cuenten como texto.
   const th = Math.min(otsu(gray), 200);
   const pts = [];
-  const step = Math.max(1, Math.round(Math.sqrt((W * H) / 60000)));
-  for (let y = 1; y < H - 1; y += step) {
-    for (let x = 1; x < W - 1; x += step) {
+  for (let y = 1; y < H - 1; y++) {
+    for (let x = 1; x < W - 1; x++) {
       const v = gray[y * W + x];
       // Solo bordes oscuros finos (letras), no manchas grandes
       if (v < th && (gray[y * W + x - 1] >= th || gray[(y - 1) * W + x] >= th || gray[y * W + x + 1] >= th)) pts.push(x - W / 2, y - H / 2);
@@ -237,8 +253,9 @@ export function enhanced(src, amount, bw) {
 
   const flat = new Uint8ClampedArray(W * H);
   for (let j = 0; j < flat.length; j++) {
-    const b = Math.max(40, bgData[j * 4]);
-    const v = Math.min(255, (gray[j] / b) * 255);
+    const b = bgData[j * 4];
+    // Solo se aplana donde hay papel (fondo claro); una mesa oscura no se «ilumina».
+    const v = b < 110 ? gray[j] : Math.min(255, (gray[j] / b) * 255);
     flat[j] = gray[j] + (v - gray[j]) * Math.min(1, k * 1.5);
   }
   // Niveles por percentiles

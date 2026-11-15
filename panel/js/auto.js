@@ -18,12 +18,14 @@ export function dateCols(ds) {
   return ds.columns.filter((c) => c.type === 'date' && c.invalid < ds.n * 0.5);
 }
 
-function defaultAgg(col) { return RATE.test(col.name) && !MONEY.test(col.name) ? 'mean' : 'sum'; }
+const RATE_STRONG = /(valoraci|rating|puntua|score|nota|edad|age|precio unit|unit price|temperatura|temp|humedad|humidity|%|tasa|rate)/i;
+function defaultAgg(col) { return RATE_STRONG.test(col.name) || (RATE.test(col.name) && !MONEY.test(col.name)) ? 'mean' : 'sum'; }
 
 // Elige una propuesta sensata de panel según los tipos de columna.
 export function proposePanel(ds) {
   const nums = measureCols(ds);
-  nums.sort((a, b) => (MONEY.test(b.name) - MONEY.test(a.name)));
+  const rank = (c) => (MONEY.test(c.name) && !RATE_STRONG.test(c.name) ? 2 : MONEY.test(c.name) ? 1 : 0);
+  nums.sort((a, b) => rank(b) - rank(a));
   const dates = dateCols(ds);
   const cats = dimCols(ds).filter((c) => c.type === 'category' && c.distinct >= 2 && c.distinct <= 200)
     .sort((a, b) => score(a) - score(b));
@@ -39,7 +41,7 @@ export function proposePanel(ds) {
 
   // Evolución temporal
   if (dates.length) {
-    charts.push({ id: newId(), type: primary ? 'area' : 'column', dim: dates[0].name, measure: primary?.name ?? null, agg: pAgg, bucket: 'auto', split: null, size: 'wide' });
+    charts.push({ id: newId(), type: primary ? (pAgg === 'mean' ? 'line' : 'area') : 'column', dim: dates[0].name, measure: primary?.name ?? null, agg: pAgg, bucket: 'auto', split: null, size: 'wide' });
   }
   // Reparto por categoría
   if (cats[0]) {
@@ -49,8 +51,8 @@ export function proposePanel(ds) {
   const histCol = nums.find((c) => c !== primary && RATE.test(c.name)) || primary;
   if (histCol) charts.push({ id: newId(), type: 'histogram', measure: histCol.name, size: 'half' });
   // Segunda categoría por recuento
-  if (cats[1]) {
-    charts.push({ id: newId(), type: 'column', dim: cats[1].name, measure: null, agg: 'count', topN: 8, sort: 'value', split: null, size: 'half' });
+  if (cats[1] && cats[1].distinct <= 20) {
+    charts.push({ id: newId(), type: cats[1].distinct > 8 ? 'bar' : 'column', dim: cats[1].name, measure: null, agg: 'count', topN: Math.min(20, cats[1].distinct), sort: 'value', split: null, size: 'half' });
   }
   // Evolución separada por una categoría pequeña: aquí se ven las tintas superpuestas.
   const small = cats.find((c) => c.distinct >= 2 && c.distinct <= 4);

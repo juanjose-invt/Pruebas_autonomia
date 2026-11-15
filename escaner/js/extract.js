@@ -68,6 +68,11 @@ const MONTHS = {
 };
 const MON = '(ene|jan|feb|mar|abr|apr|may|jun|jul|ago|aug|sep|set|oct|nov|dic|dec)[a-z]*\\.?';
 
+function todayISO() {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
+}
+
 function validDate(y, m, d, now = new Date()) {
   if (y < 100) y += 2000;
   if (m < 1 || m > 12 || d < 1 || d > 31) return null;
@@ -90,14 +95,16 @@ export function datesIn(text, english = false) {
   const reNum = /(?<!\d)(\d{1,2})\s?[\/\-.]\s?(\d{1,2})\s?[\/\-.]\s?(\d{4}|\d{2})(?!\d)/g;
   while ((m = reNum.exec(t))) {
     const a = +m[1], b = +m[2], y = +m[3];
-    let iso = null, ambiguous = false;
-    if (a > 12) iso = validDate(y, b, a);
-    else if (b > 12) iso = validDate(y, a, b);
+    let iso = null, ambiguous = false, swapped = false;
+    // swapped: solo se puede leer en el orden contrario al habitual del documento
+    // (p. ej. «03/16/2026» en un ticket español: suele ser un 10 mal leído).
+    if (a > 12) { iso = validDate(y, b, a); swapped = english; }
+    else if (b > 12) { iso = validDate(y, a, b); swapped = !english; }
     else {
       ambiguous = a !== b;
       iso = english ? validDate(y, a, b) : validDate(y, b, a);
     }
-    if (iso) out.push({ iso, raw: m[0], ambiguous, index: m.index });
+    if (iso) out.push({ iso, raw: m[0], ambiguous, swapped, index: m.index });
   }
   const reTxt = new RegExp(`(?<!\\d)(\\d{1,2})\\s*(?:de\\s+)?${MON}\\s*(?:de\\s+)?,?\\s*(\\d{4}|\\d{2})(?!\\d)`, 'g');
   while ((m = reTxt.exec(t))) {
@@ -115,19 +122,44 @@ export function datesIn(text, english = false) {
 // ---------- filas visuales ----------
 // Agrupa las palabras por altura (y no por bloques de Tesseract) para que la etiqueta
 // «TOTAL» y su importe, aunque estén en columnas distintas, caigan en la misma fila.
-export function buildRows(words) {
+export function buildRows(words, { merge = true } = {}) {
   const ws = words.filter((w) => w.text && w.text.trim()).map((w) => ({ ...w, cy: (w.bbox.y0 + w.bbox.y1) / 2, h: w.bbox.y1 - w.bbox.y0 }));
   if (!ws.length) return [];
   const hs = ws.map((w) => w.h).sort((a, b) => a - b);
   const medH = hs[Math.floor(hs.length / 2)] || 10;
   ws.sort((a, b) => a.cy - b.cy);
-  const rows = [];
+  // 1) Las líneas de Tesseract (aguantan una ligera inclinación).
+  let rows = [];
+  const byLine = new Map();
   for (const w of ws) {
-    const row = rows.find((r) => Math.abs(r.cy - w.cy) < medH * 0.55);
-    if (row) {
-      row.words.push(w);
-      row.cy = row.words.reduce((s, x) => s + x.cy, 0) / row.words.length;
-    } else rows.push({ cy: w.cy, words: [w] });
+    if (w.line) {
+      if (!byLine.has(w.line)) { const r = { cy: 0, words: [] }; byLine.set(w.line, r); rows.push(r); }
+      byLine.get(w.line).words.push(w);
+    } else {
+      const row = rows.find((r) => !r.keyed && Math.abs(r.cy - w.cy) < medH * 0.55);
+      if (row) row.words.push(w); else rows.push({ cy: w.cy, words: [w], keyed: false });
+    }
+    const r = w.line ? byLine.get(w.line) : null;
+    if (r) r.cy = r.words.reduce((s, x) => s + x.cy, 0) / r.words.length;
+  }
+  // 2) Une líneas a la misma altura que no se pisan en horizontal (etiqueta | importe en columnas).
+  const span = (r) => [Math.min(...r.words.map((w) => w.bbox.x0)), Math.max(...r.words.map((w) => w.bbox.x1))];
+  rows.sort((a, b) => a.cy - b.cy);
+  let merged = merge;
+  while (merged) {
+    merged = false;
+    for (let i = 0; i < rows.length && !merged; i++) {
+      for (let j = i + 1; j < rows.length && rows[j].cy - rows[i].cy < medH * 0.6; j++) {
+        const [a0, a1] = span(rows[i]), [b0, b1] = span(rows[j]);
+        if (a1 <= b0 || b1 <= a0) {
+          rows[i].words.push(...rows[j].words);
+          rows[i].cy = rows[i].words.reduce((s, x) => s + x.cy, 0) / rows[i].words.length;
+          rows.splice(j, 1);
+          merged = true;
+          break;
+        }
+      }
+    }
   }
   for (const r of rows) {
     r.words.sort((a, b) => a.bbox.x0 - b.bbox.x0);
@@ -137,6 +169,9 @@ export function buildRows(words) {
     r.minConf = Math.min(...r.words.map((w) => w.conf)) / 100;
     r.bbox = unionBox(r.words.map((w) => w.bbox));
     r.h = r.bbox.y1 - r.bbox.y0;
+    // Altura típica de las palabras (la caja de la fila crece con tildes y descendentes).
+    const hh = r.words.map((w) => w.bbox.y1 - w.bbox.y0).sort((a, b) => a - b);
+    r.wordH = hh[Math.floor(hh.length / 2)];
   }
   rows.sort((a, b) => a.cy - b.cy);
   rows.medH = medH;
@@ -149,23 +184,28 @@ export function unionBox(boxes) {
   }), { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity });
 }
 
-// Palabras de una fila que forman un texto concreto (para resaltar solo el importe).
-function wordsFor(row, raw) {
-  const target = raw.replace(/\s/g, '');
+// Palabras consecutivas de una fila que contienen un texto (para resaltar solo el dato).
+export function wordsMatching(row, raw) {
+  const target = fold(fixDigits(raw)).replace(/\s/g, '');
   const ws = row.words;
+  let best = null;
   for (let i = 0; i < ws.length; i++) {
     let acc = '';
-    for (let j = i; j < ws.length && j < i + 4; j++) {
-      acc += fixDigits(ws[j].text);
-      if (acc.includes(target)) return ws.slice(i, j + 1);
-      if (!target.startsWith(acc.replace(/[€$£:]/g, '')) && !acc.includes(target.slice(0, 2))) break;
+    for (let j = i; j < ws.length && j < i + 6; j++) {
+      acc += fold(fixDigits(ws[j].text));
+      if (acc.includes(target)) {
+        if (!best || j - i < best[1] - best[0]) best = [i, j];
+        break;
+      }
     }
   }
-  return ws.filter((w) => fixDigits(w.text).includes(target.slice(-3)));
+  if (best) return ws.slice(best[0], best[1] + 1);
+  const tail = target.slice(-3);
+  return ws.filter((w) => fold(fixDigits(w.text)).includes(tail));
 }
 
 function fieldFrom(row, raw, value, rule, extra = {}) {
-  const ws = (raw && wordsFor(row, raw)) || [];
+  const ws = (raw && wordsMatching(row, raw)) || [];
   const used = ws.length ? ws : row.words;
   const ocr = used.reduce((s, w) => s + w.conf, 0) / used.length / 100;
   const conf = Math.max(0, Math.min(1, ocr * rule));
@@ -181,7 +221,7 @@ const RX_TAX = /\b(i\.?\s?v\.?\s?a\.?|vat|tax|igic|impuesto|impuestos|cuota|sale
 const RX_SUBTOTAL = /(sub\s*-?\s*total|base\s+imp|\bneto\b|\bnet\b|total sin)/;
 const RX_DATE_LABEL = /\b(fecha|date|emision|emitida|issued|dated)\b/;
 const RX_DUE = /(vencim|due date|valid|caduc|hasta|until|alta|desde)/;
-const RX_NOT_VENDOR = /(factura|invoice|ticket|recibo|receipt|simplificada|tel[ef.:]|telf|tfno|phone|c\.?i\.?f|n\.?i\.?f|vat\s*(no|n[ºo°]|reg)|\bc\/|calle|avda|avenida|plaza|street|\brd\b|road|www\.|http|@|fecha|date|hora|time|cliente|customer|bill to|n[ºo°]\s|^\W*$|gracias|thank|caja|cajero|cashier|mesa|table|pedido|order|bienvenid|welcome)/;
+const RX_NOT_VENDOR = /(paseo|\bpso\b|ctra|carretera|poligono|\bav\b|\bav\.|\bavda|\bavenue|\bave\b|blvd|\bst\b|\bstr\b|\bpza\b|\d{5}|\bcp\b|store\s*#|tienda\s*n|factura|invoice|ticket|recibo|receipt|simplificada|tel[ef.:]|telf|tfno|phone|c\.?i\.?f|n\.?i\.?f|vat\s*(no|n[ºo°]|reg)|\bc\/|calle|avda|avenida|plaza|street|\brd\b|road|www\.|http|@|fecha|date|hora|time|cliente|customer|bill to|n[ºo°]\s|^\W*$|gracias|thank|caja|cajero|cashier|mesa|table|pedido|order|bienvenid|welcome)/;
 const RX_LEGAL = /\b(s\.?\s?l\.?u?|s\.?\s?a\.?|ltd|llc|inc|gmbh|s\.?\s?coop|c\.?\s?b\.?)\b\.?$/;
 
 export function extractFields(words, { width = 1000, height = 1000, lang = 'es' } = {}) {
@@ -271,9 +311,14 @@ export function extractFields(words, { width = 1000, height = 1000, lang = 'es' 
     const subRow = rows.find((r) => RX_SUBTOTAL.test(r.folded) && amountsIn(r.text).length);
     const sub = subRow ? amountsIn(subRow.text).slice(-1)[0].value : null;
     const tv = fields.total.value;
+    // Sin línea de impuestos legible pero con base y total: se deduce, y se marca para revisar.
+    if (fields.tax.value == null && sub != null && sub < tv && sub > tv * 0.5) {
+      fields.tax = { value: Math.round((tv - sub) * 100) / 100, conf: 0.62, status: 'check', bbox: null, source: 'auto' };
+      notes.push('tax-derived');
+    }
     if (fields.tax.value != null) {
       if (fields.tax.value >= tv) { fields.tax.conf *= 0.5; fields.tax.status = 'doubt'; }
-      else if (sub != null && Math.abs(sub + fields.tax.value - tv) < 0.02) {
+      else if (sub != null && !notes.includes('tax-derived') && Math.abs(sub + fields.tax.value - tv) < 0.02) {
         fields.total.conf = Math.min(1, fields.total.conf + 0.1);
         fields.tax.conf = Math.min(1, fields.tax.conf + 0.1);
         notes.push('sum-ok');
@@ -291,20 +336,40 @@ export function extractFields(words, { width = 1000, height = 1000, lang = 'es' 
       if (RX_DATE_LABEL.test(r.folded)) rule += 0.08;
       if (RX_DUE.test(r.folded)) rule -= 0.3;
       if (d.ambiguous) rule -= 0.2;
+      if (d.swapped) rule -= english ? 0.1 : 0.4;
+      if (d.iso > todayISO()) rule -= 0.4; // un ticket no suele ser del futuro
       dates.push({ r, d, rule: Math.min(1, rule) });
     }
   });
   if (dates.length) {
     dates.sort((x, y) => y.rule - x.rule || x.r.cy - y.r.cy);
     const b = dates[0];
-    fields.date = fieldFrom(b.r, null, b.d.iso, b.rule);
-    const ws = b.r.words.filter((w) => /\d/.test(w.text) || new RegExp(MON).test(fold(w.text)));
-    if (ws.length) fields.date.bbox = unionBox(ws.map((w) => w.bbox));
+    fields.date = fieldFrom(b.r, b.d.raw, b.d.iso, b.rule);
     if (b.d.ambiguous) notes.push('date-ambiguous');
+    if (b.d.swapped && !english) notes.push('date-swapped');
+    if (b.d.iso > todayISO()) notes.push('date-future');
   }
 
   // ---- proveedor ----
-  const top = rows.filter((r) => r.cy < height * 0.4).slice(0, 9);
+  // Para el proveedor se usan las líneas sin unir: así «Talleres Ruiz S.L.» no se mezcla
+  // con «FACTURA» de la columna de la derecha.
+  const lineRows = buildRows(words, { merge: false });
+  // Cada línea se parte por los huecos grandes (columnas) y cada trozo es un candidato.
+  const top = [];
+  for (const r of lineRows.filter((x) => x.cy < height * 0.4).slice(0, 10)) {
+    let seg = [r.words[0]];
+    const flush = () => {
+      const text = seg.map((w) => w.text).join(' ');
+      const hs = seg.map((w) => w.bbox.y1 - w.bbox.y0).sort((a, b) => a - b);
+      top.push({ ...r, words: seg, text, folded: fold(text), wordH: hs[Math.floor(hs.length / 2)], bbox: unionBox(seg.map((w) => w.bbox)) });
+    };
+    for (let k = 1; k < r.words.length; k++) {
+      const gap = r.words[k].bbox.x0 - r.words[k - 1].bbox.x1;
+      if (gap > r.wordH * 2.5) { flush(); seg = []; }
+      seg.push(r.words[k]);
+    }
+    flush();
+  }
   const cands = top.map((r, i) => {
     const t = r.text.trim();
     const letters = (t.match(/[a-záéíóúñüç]/gi) || []).length;
@@ -312,7 +377,7 @@ export function extractFields(words, { width = 1000, height = 1000, lang = 'es' 
     if (letters < 3 || ratio < 0.6 || RX_NOT_VENDOR.test(r.folded) || amountsIn(t).length || datesIn(t).length) return null;
     let s = 0.55 + (ratio - 0.6) * 0.5;
     if (t === t.toUpperCase()) s += 0.08;
-    if (r.h > rows.medH * 1.25) s += 0.12;
+    if (r.wordH > lineRows.medH * 1.2) s += 0.12;
     if (RX_LEGAL.test(fold(t))) s += 0.1;
     s -= i * 0.04;
     if (t.length > 42) s -= 0.15;

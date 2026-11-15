@@ -342,7 +342,10 @@ export function histogram(ds, idx, colName, binsWanted) {
   for (const x of vals) { if (x < lo) lo = x; if (x > hi) hi = x; sum += x; }
   const target = binsWanted || Math.min(30, Math.max(6, Math.ceil(Math.log2(vals.length) + 1)));
   let step, start;
-  if (hi === lo) { step = Math.abs(lo) > 0 ? Math.abs(lo) / 10 : 1; start = lo - step / 2; }
+  let allInt = true;
+  for (let k = 0; k < vals.length && allInt; k += Math.max(1, Math.floor(vals.length / 2000))) if (!Number.isInteger(vals[k])) allInt = false;
+  if (allInt && hi - lo <= 30) { step = 1; start = lo - 0.5; }
+  else if (hi === lo) { step = Math.abs(lo) > 0 ? Math.abs(lo) / 10 : 1; start = lo - step / 2; }
   else { step = niceStep(hi - lo, target); start = Math.floor(lo / step) * step; }
   const count = Math.floor((hi - start) / step + 1e-9) + 1;
   const bins = Array.from({ length: count }, (_, b) => ({ x0: start + b * step, x1: start + (b + 1) * step, count: 0 }));
@@ -353,7 +356,7 @@ export function histogram(ds, idx, colName, binsWanted) {
     bins[b].count++;
   }
   while (bins.length > 1 && bins[bins.length - 1].count === 0) bins.pop();
-  return { bins, n: vals.length, mean: sum / vals.length, median: median(vals), min: lo, max: hi };
+  return { integer: allInt && step === 1, bins, n: vals.length, mean: sum / vals.length, median: median(vals), min: lo, max: hi };
 }
 
 export function scatter(ds, idx, xName, yName, max = 2500) {

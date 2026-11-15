@@ -177,17 +177,22 @@ async function buildBlocks(model, W, pad) {
         for (const l of tl) { ctx.fillText(l, x, yy + 20); yy += 26; }
         yy += 10;
         if (im) ctx.drawImage(im.img, x, yy, w, ih);
-        else { ctx.font = `500 15px ${FONT}`; ctx.fillText(c.message || '', x, yy + 30); }
+        else { ctx.font = `500 15px ${FONT}`; wrap(ctx, c.message || '', w).forEach((l, k) => ctx.fillText(l, x, yy + 24 + k * 20)); }
         yy += ih;
         if (legendH) {
           let lx = x;
           ctx.font = `600 13px ${FONT}`;
           c.legend.forEach((it) => {
-            ctx.save(); ctx.globalCompositeOperation = 'multiply';
-            ctx.fillStyle = it.color; ctx.fillRect(lx, yy + 9, 22, 11);
-            ctx.restore();
-            ctx.strokeStyle = INK.blue; ctx.lineWidth = 1; ctx.setLineDash(it.dash || []);
-            ctx.strokeRect(lx + 0.5, yy + 9.5, 21, 10); ctx.setLineDash([]);
+            ctx.strokeStyle = INK.blue; ctx.setLineDash(it.dash || []);
+            if (it.line) {
+              ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(lx, yy + 14.5); ctx.lineTo(lx + 22, yy + 14.5); ctx.stroke();
+            } else {
+              ctx.save(); ctx.globalCompositeOperation = 'multiply';
+              ctx.fillStyle = it.color; ctx.fillRect(lx, yy + 9, 22, 11);
+              ctx.restore();
+              ctx.lineWidth = 1; ctx.strokeRect(lx + 0.5, yy + 9.5, 21, 10);
+            }
+            ctx.setLineDash([]);
             ctx.fillStyle = INK.blue; ctx.fillText(it.label, lx + 30, yy + 19);
             lx += 44 + ctx.measureText(it.label).width;
           });

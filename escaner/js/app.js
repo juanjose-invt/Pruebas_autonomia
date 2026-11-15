@@ -1,7 +1,7 @@
 import { t, setLang, getLang, locale, applyI18n } from './i18n.js';
 import * as img from './imaging.js';
 import { recognize } from './ocr.js';
-import { extractFields, buildRows, parseForField, parseAmount, formatAmount, statusOf, fold, FIELDS } from './extract.js';
+import { extractFields, buildRows, parseForField, parseAmount, formatAmount, statusOf, fold, datesIn, FIELDS } from './extract.js';
 import * as db from './db.js';
 import { readHuchas, addExpense, stillThere, huchasCSV } from './huchas.js';
 
@@ -107,11 +107,7 @@ async function setSource(canvas, { keepDoc = false, params } = {}) {
   S.rot = null;
   S.rotKey = '';
   if (params) S.params = params;
-  else {
-    let angle = 0;
-    try { angle = img.detectSkew(canvas); } catch (e) { angle = 0; }
-    S.params = { rot: 0, angle: Math.abs(angle) >= 0.3 ? angle : 0, crop: null, boost: 60, bw: false };
-  }
+  else S.params = { rot: 0, ...autoAdjust(canvas, 0), boost: 60, bw: false };
   if (!keepDoc) { S.doc = newDoc(); S.imageBlob = null; }
   S.stale = false;
   syncPanels();
@@ -132,6 +128,26 @@ function showBed(which) {
 }
 
 // ---------- tratamiento ----------
+// Enderezado y recorte automáticos para una orientación dada. Deja el giro en caché.
+function autoAdjust(src, rot) {
+  let angle = 0, crop = null;
+  try {
+    const a = img.detectSkew(rot ? img.rotated(src, rot, 0) : src);
+    angle = Math.abs(a) >= 0.3 ? a : 0;
+  } catch (e) { angle = 0; }
+  try {
+    // Foto de un ticket sobre una mesa: se recorta al papel (se deshace con «Recortar → Todo»).
+    S.src = src;
+    S.rot = rotatedSrcFor(src, { rot, angle });
+    S.rotKey = `${rot}|${angle}`;
+    const r = img.detectPaper(S.rot);
+    if (r && r.w * r.h < 0.85 && r.w * r.h > 0.15) crop = r;
+  } catch (e) { crop = null; }
+  return { angle, crop };
+}
+function rotatedSrcFor(src, p) {
+  return (p.rot || p.angle) ? img.rotated(src, p.rot, p.angle) : src;
+}
 function rotatedSrc() {
   const key = `${S.params.rot}|${S.params.angle}`;
   if (!S.rot || S.rotKey !== key) {
@@ -206,7 +222,13 @@ function drawMarks({ swipe = false } = {}) {
     const tag = document.createElement('span');
     tag.className = `hl-tag${doubt ? ' doubt' : ''}`;
     tag.textContent = t(`field.${f}`) + (doubt ? ' ?' : '');
-    tag.setAttribute('style', `left:${pct(fd.bbox.x0 - 6, W)};top:${pct(fd.bbox.y0 - padY, H)};--c:${HL[f]}`);
+    // La etiqueta va al lado libre del trazo (izquierda si el dato está a la derecha).
+    const right = (fd.bbox.x0 + fd.bbox.x1) / 2 > W * 0.5;
+    const cy = pct((fd.bbox.y0 + fd.bbox.y1) / 2, H);
+    tag.className += right ? ' at-left' : ' at-right';
+    tag.setAttribute('style', right
+      ? `right:${pct(W - fd.bbox.x0 + 10, W)};top:${cy};--c:${HL[f]}`
+      : `left:${pct(fd.bbox.x1 + 10, W)};top:${cy};--c:${HL[f]}`);
     frag.append(hl, tag);
     n++;
   }
@@ -258,7 +280,7 @@ async function scan() {
     const ex = extractFields(res.words, { width: target.width, height: target.height, lang: getLang() });
     // Lo que la persona ya había corregido a mano se respeta al volver a reconocer.
     for (const f of FIELDS) {
-      if (S.doc && S.doc.fields[f] && S.doc.fields[f].source === 'manual' && S.doc.scanned) d.fields[f] = { ...S.doc.fields[f], bbox: null };
+      if (S.doc && S.doc.fields[f] && S.doc.fields[f].source !== 'auto' && S.doc.scanned) d.fields[f] = { ...S.doc.fields[f], bbox: null };
       else d.fields[f] = ex.fields[f];
     }
     d.notes = ex.notes;
@@ -333,8 +355,10 @@ const fmtDate = (iso) => {
   return new Intl.DateTimeFormat(locale(), { dateStyle: 'medium' }).format(new Date(y, m - 1, d));
 };
 
+const isoToDMY = (iso) => (iso && /^\d{4}-\d{2}-\d{2}$/.test(iso) ? iso.split('-').reverse().join('/') : '');
 function fieldValueText(f, v) {
   if (v == null) return '';
+  if (f === 'date') return isoToDMY(v);
   if (f === 'total' || f === 'tax') return formatAmount(v, getLang());
   return String(v);
 }
@@ -351,13 +375,14 @@ function fieldHTML(f) {
   const isAmt = f === 'total' || f === 'tax';
   const cur = isAmt ? (CUR[S.doc.currency] || '€') : '';
   const input = f === 'date'
-    ? `<input id="f-${f}" type="date" value="${h(fd.value || '')}" aria-label="${h(t('field.' + f))}">`
+    ? `<input id="f-${f}" type="text" inputmode="numeric" value="${h(isoToDMY(fd.value))}" placeholder="${h(t('field.ph.date'))}" aria-label="${h(t('field.' + f))}" autocomplete="off" spellcheck="false">`
     : `<input id="f-${f}" type="text" value="${h(fieldValueText(f, fd.value))}" ${isAmt ? 'inputmode="decimal"' : ''} placeholder="${h(t(isAmt ? 'field.ph.amount' : 'field.ph.vendor'))}" aria-label="${h(t('field.' + f))}" autocomplete="off" spellcheck="false">`;
-  return `<div class="f ${st}${big ? ' big' : ''}" data-field="${f}" style="--c:${HL[f]}">
-    <div class="f-top"><span class="f-label">${h(t('field.' + f))}</span><span class="f-state ${st}">${h(t('status.' + st))}</span></div>
+  return `<div class="f st-${st}${big ? ' big' : ''}" data-field="${f}" style="--c:${HL[f]}">
+    <div class="f-top"><span class="f-label">${h(t('field.' + f))}</span><span class="f-state st-${st}">${h(t('status.' + st))}</span></div>
     <div class="f-val">${input}${cur ? `<span class="f-cur">${h(cur)}</span>` : ''}
       <button type="button" class="pt-btn" data-point="${f}" aria-pressed="${S.pointField === f}" aria-label="${h(t('field.point'))}" title="${h(t('field.point'))}"><svg class="ico" aria-hidden="true"><use href="#i-point"/></svg></button></div>
     <div class="f-conf"><span class="dots" aria-hidden="true">${dots(st === 'manual' ? 1 : fd.conf)}</span><span>${fd.value == null && st !== 'manual' ? h(t('field.none')) : st === 'manual' ? h(t('status.manual')) : h(t('field.conf', { p: Math.round(fd.conf * 100) }))}</span></div>
+    ${fd.source === 'picked' ? `<p class="f-note">${h(t('field.picked'))}</p>` : ''}
     ${st === 'doubt' ? `<p class="f-note warn">${h(t('status.doubt.long'))}</p>` : ''}
   </div>`;
 }
@@ -443,6 +468,10 @@ el.ticket.addEventListener('change', (e) => {
       if (v == null) { toast(t('field.unparsable', { t: raw, what: t('field.what.amount') })); inp.value = fieldValueText(f, fd.value); return; }
     }
     if (f === 'vendor') v = raw.slice(0, 80);
+    if (f === 'date') {
+      v = /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : parseForField('date', raw, false);
+      if (!v) { toast(t('field.unparsable', { t: raw, what: t('field.what.date') })); inp.value = fieldValueText(f, fd.value); return; }
+    }
     S.doc.fields[f] = { value: v, conf: 1, status: 'manual', bbox: fd.bbox, source: 'manual' };
   }
   refreshField(f);
@@ -557,8 +586,14 @@ function assign(f, wi) {
     return false;
   }
   const bbox = used.reduce((u, x) => ({ x0: Math.min(u.x0, x.bbox.x0), y0: Math.min(u.y0, x.bbox.y0), x1: Math.max(u.x1, x.bbox.x1), y1: Math.max(u.y1, x.bbox.y1) }), { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity });
-  const conf = used.reduce((s, x) => s + x.conf, 0) / used.length / 100;
-  d.fields[f] = { value, conf, status: 'manual', bbox, source: 'manual', ocrStatus: statusOf(conf) };
+  // Señalar elige la zona, pero la lectura de esa zona sigue siendo del OCR: conserva su
+  // confianza (y una fecha que solo cuadra al revés sigue siendo dudosa).
+  let conf = used.reduce((s, x) => s + x.conf, 0) / used.length / 100;
+  if (f === 'date') {
+    const ds = datesIn(used.map((x) => x.text).join(' '), d.english)[0];
+    if (ds && ((ds.swapped && !d.english) || ds.iso > new Date().toISOString().slice(0, 10))) conf *= 0.6;
+  }
+  d.fields[f] = { value, conf, status: statusOf(conf), bbox, source: 'picked' };
   refreshField(f);
   drawMarks({ swipe: true });
   toast(t('field.assigned', { f: t('field.' + f) }));
@@ -666,7 +701,9 @@ $('#tRotate').addEventListener('click', () => {
   const wasCrop = S.tool === 'crop';
   closeTool();
   S.params.rot = (S.params.rot + 90) % 360;
-  S.params.crop = null; // el recorte era de la orientación anterior
+  // La inclinación y el recorte se vuelven a calcular para la nueva orientación.
+  Object.assign(S.params, autoAdjust(S.src, S.params.rot));
+  syncPanels();
   render();
   if (wasCrop) openTool('crop');
 });

@@ -165,9 +165,10 @@ button { cursor: pointer; }
 @keyframes swipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
 .hl.doubt { opacity: .4; outline: 2px dashed var(--thermal-red); outline-offset: 2px; }
 .hl-tag {
-  position: absolute; transform: translateY(-100%); pointer-events: none;
-  font-size: 11px; line-height: 1; font-weight: 600; padding: 3px 5px 3px; border-radius: 3px 3px 3px 0;
-  background: var(--c); color: var(--ink); white-space: nowrap; margin-top: -3px;
+  position: absolute; transform: translateY(-50%); pointer-events: none;
+  font-size: 10.5px; line-height: 1; font-weight: 600; padding: 3px 5px; border-radius: 2px;
+  background: var(--c); color: var(--ink); white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .25);
 }
 .hl-tag.doubt { background: var(--thermal-red); color: #fff; }
 
@@ -271,10 +272,10 @@ button { cursor: pointer; }
 .f-label { font-weight: 600; position: relative; z-index: 0; padding: 0 4px; margin-left: -4px; }
 .f-label::before { content: ''; position: absolute; z-index: -1; inset: 2px -2px 1px; background: var(--c); opacity: .7; border-radius: 2px 7px 3px 8px / 5px 2px 7px 3px; transform: skewX(-8deg); }
 .f-state { margin-left: auto; font-size: 12px; font-weight: 600; padding: 1px 6px; border-radius: 2px; white-space: nowrap; }
-.f-state.ok { border: 1.5px solid var(--ink); }
-.f-state.check { border: 1.5px dashed var(--ink); }
-.f-state.doubt { background: var(--thermal-red); color: #fff; }
-.f-state.manual { background: var(--ink); color: var(--paper); }
+.f-state.st-ok { border: 1.5px solid var(--ink); }
+.f-state.st-check { border: 1.5px dashed var(--ink); }
+.f-state.st-doubt { background: var(--thermal-red); color: #fff; }
+.f-state.st-manual { background: var(--ink); color: var(--paper); }
 .f-val { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
 .f-val input {
   flex: 1; min-width: 0; min-height: 44px; padding: 6px 8px; border: 0; border-radius: 3px;
@@ -284,7 +285,7 @@ button { cursor: pointer; }
 .f-val input:focus { background: var(--paper-2); }
 .f-val input::placeholder { color: #8d8a98; }
 .f.big .f-val input { font-size: 26px; font-weight: 600; letter-spacing: -.02em; }
-.f.doubt .f-val input { border-bottom: 2px solid var(--thermal-red); }
+.f.st-doubt .f-val input { border-bottom: 2px solid var(--thermal-red); }
 .f-cur { font-weight: 600; }
 .pt-btn {
   width: 44px; height: 44px; flex: none; display: grid; place-items: center; border-radius: 4px;
@@ -296,9 +297,9 @@ button { cursor: pointer; }
 .dots { display: inline-flex; gap: 2px; }
 .dots i { width: 7px; height: 9px; background: #cfcdd6; }
 .dots i.on { background: var(--ink); }
-.f.doubt .dots i.on { background: var(--thermal-red); }
+.f.st-doubt .dots i.on { background: var(--thermal-red); }
 .f-note { margin: 6px 0 0; font-size: 12.5px; color: var(--ink-2); }
-.f.doubt .f-note.warn { color: var(--thermal-red); }
+.f.st-doubt .f-note.warn { color: var(--thermal-red); }
 
 .t-empty { text-align: center; color: var(--ink-2); margin: 6px 0; text-wrap: pretty; }
 .t-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
