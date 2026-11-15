@@ -1,6 +1,6 @@
 // Modo paso a paso: escena 3D del gesto, texto del paso, temporizador y pantalla encendida.
 import { t, getLang, timeLabel, dayLabel } from './i18n.js';
-import { h, icon, toast } from './ui.js';
+import { h, put, icon, toast } from './ui.js';
 import { store, getRecipe, scaled } from './store.js';
 import { buildSteps, loc } from './steps.js';
 import { fmtDuration } from './calc.js';
@@ -52,7 +52,7 @@ export function cookView(id) {
   const key = (i) => `${id}|${steps[i].id}`;
   const setPlayIcon = () => {
     const on = scene?.playing;
-    playBtn.replaceChildren(icon(on ? 'pause' : 'play'));
+    put(playBtn, icon(on ? 'pause' : 'play'));
     playBtn.setAttribute('aria-label', on ? t('cook.pause3d') : t('cook.play3d'));
   };
 
@@ -110,7 +110,7 @@ export function cookView(id) {
     const round = s.rounds && tm?.round ? h('span.round', t('timer.round', { k: Math.min(tm.round, s.rounds), n: s.rounds })) : null;
     const add = total >= 3600 ? 15 : total >= 600 ? 5 : 1;
     timerBox.className = 'timer' + (running ? ' running' : '') + (done ? ' done' : '');
-    timerBox.replaceChildren(
+    put(timerBox, 
       h('div.timer-main', big, h('p.timer-status', { 'aria-live': 'polite' }, status, round)),
       h('div.timer-actions',
         running
@@ -121,7 +121,7 @@ export function cookView(id) {
       total >= 3600 ? h('p.hint', t('timer.longHint')) : null);
     // Otros temporizadores de esta receta que siguen en marcha.
     const run = steps.map((st, i) => ({ st, i, tm: T.getTimer(key(i)) })).filter((x) => x.i !== index && x.tm && (x.tm.running || x.tm.done));
-    others.replaceChildren(...run.map((x) => h('button.other', { type: 'button', onclick: () => goTo(x.i) },
+    put(others, ...run.map((x) => h('button.other', { type: 'button', onclick: () => goTo(x.i) },
       icon(x.tm.done ? 'bell' : 'clock'), h('span', `${x.i + 1}. ${loc(x.st.title, L)}`), h('b', x.tm.done ? t('timer.doneShort') : T.fmtClock(x.tm.left)))));
   }
 
@@ -143,11 +143,11 @@ export function cookView(id) {
     const s = steps[index];
     stepNo.textContent = t('cook.count', { i: index + 1, n: steps.length });
     title.textContent = loc(s.title, L);
-    meta.replaceChildren(icon('clock'), fmtDuration(s.minutes, L));
+    put(meta, icon('clock'), fmtDuration(s.minutes, L));
     text.textContent = loc(s.text, L);
     prevBtn.disabled = index === 0;
-    nextBtn.replaceChildren(index === steps.length - 1 ? t('cook.finish') : t('cook.next'), icon(index === steps.length - 1 ? 'check' : 'next'));
-    dots.replaceChildren(...steps.map((st, i) => h('li', h('button', {
+    put(nextBtn, index === steps.length - 1 ? t('cook.finish') : t('cook.next'), icon(index === steps.length - 1 ? 'check' : 'next'));
+    put(dots, ...steps.map((st, i) => h('li', h('button', {
       type: 'button', 'aria-label': `${i + 1}. ${loc(st.title, L)}`, 'aria-current': i === index ? 'step' : null,
       class: i < index ? 'past' : '', onclick: () => goTo(i),
     }, i + 1))));
@@ -170,13 +170,13 @@ export function cookView(id) {
   modeBtn.addEventListener('click', () => { use3d = !use3d; store.set('no3d', !use3d); showStage(); });
   const drawSound = () => {
     const on = !!store.get('sound');
-    soundBtn.replaceChildren(icon(on ? 'bell' : 'bellOff'));
+    put(soundBtn, icon(on ? 'bell' : 'bellOff'));
     soundBtn.setAttribute('aria-pressed', String(on));
     soundBtn.setAttribute('aria-label', on ? t('cook.soundOn') : t('cook.soundOff'));
   };
   soundBtn.addEventListener('click', () => { store.set('sound', !store.get('sound')); drawSound(); if (store.get('sound')) T.ring(1); toast(store.get('sound') ? t('cook.soundOn') : t('cook.soundOff')); });
   const drawWake = (on) => {
-    wakeChip.replaceChildren(icon('screen'), on ? t('cook.awake') : T.wakeSupported() ? t('cook.awakeOff') : t('cook.awakeNo'));
+    put(wakeChip, icon('screen'), on ? t('cook.awake') : T.wakeSupported() ? t('cook.awakeOff') : t('cook.awakeNo'));
     wakeChip.classList.toggle('on', !!on);
   };
 

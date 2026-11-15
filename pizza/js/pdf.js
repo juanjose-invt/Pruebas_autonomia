@@ -48,10 +48,10 @@ export async function buildPdf(r, overrides = {}) {
   let y = 0;
   const footer = () => {
     doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...MUTE);
-    doc.text(t('pdf.footer'), mx, H - 10);
-    doc.text('Impasto, by innovativecode', W - mx, H - 10, { align: 'right' });
+    doc.text(t('pdf.footer'), mx, H - 13);
+    doc.text('Impasto, by innovativecode', mx, H - 8.5);
   };
-  const need = (hh) => { if (y + hh > H - 18) { footer(); doc.addPage(); y = 20; } };
+  const need = (hh) => { if (y + hh > H - 22) { footer(); doc.addPage(); y = 20; } };
   const heading = (text) => {
     need(16); y += 4;
     doc.setFont('Abril', 'normal'); doc.setFontSize(15); doc.setTextColor(...BASIL);
@@ -66,7 +66,7 @@ export async function buildPdf(r, overrides = {}) {
   // Rótulo
   doc.setFont('Abril', 'normal'); doc.setFontSize(26);
   const titleLines = doc.splitTextToSize(name, cw);
-  const bandH = 26 + titleLines.length * 10.5;
+  const bandH = 33 + titleLines.length * 10.5;
   doc.setFillColor(...TOMATO); doc.rect(0, 0, W, bandH, 'F');
   doc.setTextColor(...CREAM); doc.setFontSize(11);
   doc.text('Impasto', mx, 13);

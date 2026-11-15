@@ -22,6 +22,12 @@ export function h(sel, attrs, ...kids) {
   return el;
 }
 
+// Sustituye el contenido de un nodo, ignorando nulos.
+export function put(el, ...kids) {
+  el.replaceChildren(...kids.flat(Infinity).filter((k) => k != null && k !== false));
+  return el;
+}
+
 // Iconos propios, trazo único de 1,75 sobre rejilla de 24.
 const PATHS = {
   leaf: '<path d="M5 19c0-8 5-13 14-14 0 9-5 14-13 14"/><path d="M5 19c2-5 5-8 9-10"/>',

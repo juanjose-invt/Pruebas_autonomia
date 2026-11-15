@@ -225,10 +225,10 @@ function drawMarks({ swipe = false } = {}) {
     // La etiqueta va al lado libre del trazo (izquierda si el dato está a la derecha).
     const right = (fd.bbox.x0 + fd.bbox.x1) / 2 > W * 0.5;
     const cy = pct((fd.bbox.y0 + fd.bbox.y1) / 2, H);
-    tag.className += right ? ' at-left' : ' at-right';
+    tag.className += right ? ' at-left' : ' above';
     tag.setAttribute('style', right
       ? `right:${pct(W - fd.bbox.x0 + 10, W)};top:${cy};--c:${HL[f]}`
-      : `left:${pct(fd.bbox.x1 + 10, W)};top:${cy};--c:${HL[f]}`);
+      : `left:${pct(fd.bbox.x0 - 6, W)};top:${pct(fd.bbox.y0 - padY, H)};--c:${HL[f]}`);
     frag.append(hl, tag);
     n++;
   }
@@ -392,6 +392,13 @@ function doubtCount() {
   return FIELDS.filter((f) => S.doc.fields[f].source !== 'manual' && S.doc.fields[f].status === 'doubt').length;
 }
 
+function notesHTML() {
+  const d = S.doc;
+  const NOTE_FIELD = { 'total-guess': 'total', 'tax-sum': 'tax', 'tax-derived': 'tax', 'sum-ok': 'tax', 'sum-mismatch': 'total', 'date-ambiguous': 'date', 'date-swapped': 'date', 'date-future': 'date' };
+  // Una nota sobre un campo deja de mostrarse cuando la persona lo ha señalado o corregido.
+  return (d.notes || []).filter((n) => !NOTE_FIELD[n] || d.fields[NOTE_FIELD[n]].source === 'auto').map((n) => `<p class="f-note">${h(t('note.' + n))}</p>`).join('');
+}
+
 function renderTicket({ print = false } = {}) {
   const d = S.doc;
   const foot = `<hr class="cut"><footer class="t-foot"><p>${h(t('ticket.thanks'))}</p>
@@ -402,7 +409,6 @@ function renderTicket({ print = false } = {}) {
     return;
   }
   const dc = doubtCount();
-  const notes = (d.notes || []).filter((n) => n !== 'sum-ok' || true).map((n) => `<p class="f-note">${h(t('note.' + n))}</p>`).join('');
   const sentInfo = d.sent ? `<p class="t-sent">${h(t('ticket.sentTo', { d: fmtDateTime(d.sent.at) }))}</p>` : '';
   el.ticket.innerHTML = `
     <header class="t-head"><h2>${h(t('ticket.head'))}</h2>
@@ -411,7 +417,7 @@ function renderTicket({ print = false } = {}) {
     </header>
     <hr class="cut">
     <div class="t-fields">${FIELDS.map(fieldHTML).join('')}</div>
-    ${notes}
+    <div id="tNotes">${notesHTML()}</div>
     <hr class="cut">
     <div class="t-actions">
       <button type="button" class="paper-btn" id="copyText"><svg class="ico" aria-hidden="true"><use href="#i-copy"/></svg>${h(t('ticket.copy'))}</button>
@@ -441,6 +447,8 @@ function refreshField(f) {
     const again = el.ticket.querySelector(`#${CSS.escape(focused)}`) || el.ticket.querySelector(`[data-point="${focused}"]`);
     if (again) again.focus();
   }
+  const tn = $('#tNotes');
+  if (tn) tn.innerHTML = notesHTML();
   const dc = doubtCount();
   const sum = $('#tSum');
   if (sum) {

@@ -170,6 +170,7 @@ button { cursor: pointer; }
   background: var(--c); color: var(--ink); white-space: nowrap;
   box-shadow: 0 1px 2px rgba(0, 0, 0, .25);
 }
+.hl-tag.above { transform: translateY(calc(-100% - 2px)); }
 .hl-tag.doubt { background: var(--thermal-red); color: #fff; }
 
 /* sombra de lo que aún no ha pasado bajo la lámpara */
@@ -415,8 +416,9 @@ button { cursor: pointer; }
   .brand { font-size: 17px; }
   .case-btn span { font-size: 13.5px; }
   .glass { height: 58dvh; min-height: 300px; margin: 5px; }
-  .tool { min-width: 56px; font-size: 12px; padding: 6px 4px; }
-  .tool-scan { flex-basis: 100%; }
+  .tools { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; padding: 0; }
+  .tool { min-width: 0; font-size: 11px; padding: 6px 2px; letter-spacing: -.02em; }
+  .tool-scan { grid-column: 1 / -1; font-size: 15px; }
   .ticket { padding: 28px 16px 32px; }
   .t-actions { grid-template-columns: 1fr; }
   .hu-grid { grid-template-columns: 1fr; }
@@ -433,3 +435,4 @@ button { cursor: pointer; }
   .hl.swipe, .ticket.printing, .drawer { animation: none; }
   .meter-fill { transition: none; }
 }
+.readout-text:empty::before { display: none; }

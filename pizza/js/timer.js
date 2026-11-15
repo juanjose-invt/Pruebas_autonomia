@@ -108,7 +108,7 @@ function ensureTick() {
     }
     if (finished.length) {
       if (store.get('sound')) ring();
-      try { navigator.vibrate?.([200, 120, 200, 120, 400]); } catch { /* sin vibración */ }
+      try { if (navigator.userActivation?.hasBeenActive) navigator.vibrate?.([200, 120, 200, 120, 400]); } catch { /* sin vibración */ }
       // PUNTO DE INTEGRACIÓN (futuro): aviso con la app cerrada.
       // Un temporizador de 48 h solo suena si la app está abierta. Para avisar con la app
       // cerrada haría falta un servidor de notificaciones push (Push API + VAPID): aquí se
@@ -116,7 +116,7 @@ function ensureTick() {
     }
     notify(finished);
     if (!running && !subs.size) { clearInterval(tick); tick = 0; }
-  }, 500);
+  }, 250);
 }
 if (Object.values(all()).some((tm) => tm.running)) ensureTick();
 

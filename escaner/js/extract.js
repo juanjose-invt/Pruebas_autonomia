@@ -230,6 +230,9 @@ export function extractFields(words, { width = 1000, height = 1000, lang = 'es' 
   const enHits = (all.match(/\b(total|tax|amount|due|receipt|invoice|thank|date|change|cash|subtotal)\b/g) || []).length;
   const esHits = (all.match(/\b(iva|importe|fecha|factura|gracias|cambio|efectivo|ticket|cif|nif|base|cuota)\b/g) || []).length;
   const english = enHits > esHits + 1 || (lang === 'en' && enHits >= esHits);
+  const currency = detectCurrency(all);
+  // mes/día solo en documentos en inglés que no sean en libras o euros (EE. UU.); el Reino Unido usa día/mes.
+  const monthFirst = english && currency !== 'GBP' && currency !== 'EUR' && !/\bvat\b/.test(all);
 
   const fields = { vendor: empty(), date: empty(), total: empty(), tax: empty() };
   const notes = [];
@@ -318,7 +321,12 @@ export function extractFields(words, { width = 1000, height = 1000, lang = 'es' 
     }
     if (fields.tax.value != null) {
       if (fields.tax.value >= tv) { fields.tax.conf *= 0.5; fields.tax.status = 'doubt'; }
-      else if (sub != null && !notes.includes('tax-derived') && Math.abs(sub + fields.tax.value - tv) < 0.02) {
+      else if (sub != null && !notes.includes('tax-derived') && Math.abs(sub + fields.tax.value - tv) >= 0.02) {
+        // No cuadra: alguno de los tres está mal leído.
+        fields.total.conf = Math.min(fields.total.conf, 0.7);
+        fields.tax.conf = Math.min(fields.tax.conf, 0.7);
+        notes.push('sum-mismatch');
+      } else if (sub != null && !notes.includes('tax-derived') && Math.abs(sub + fields.tax.value - tv) < 0.02) {
         fields.total.conf = Math.min(1, fields.total.conf + 0.1);
         fields.tax.conf = Math.min(1, fields.tax.conf + 0.1);
         notes.push('sum-ok');
@@ -331,12 +339,12 @@ export function extractFields(words, { width = 1000, height = 1000, lang = 'es' 
   // ---- fecha ----
   const dates = [];
   rows.forEach((r) => {
-    for (const d of datesIn(r.text, english)) {
+    for (const d of datesIn(r.text, monthFirst)) {
       let rule = 0.9;
       if (RX_DATE_LABEL.test(r.folded)) rule += 0.08;
       if (RX_DUE.test(r.folded)) rule -= 0.3;
       if (d.ambiguous) rule -= 0.2;
-      if (d.swapped) rule -= english ? 0.1 : 0.4;
+      if (d.swapped) rule -= monthFirst ? 0.1 : 0.4;
       if (d.iso > todayISO()) rule -= 0.4; // un ticket no suele ser del futuro
       dates.push({ r, d, rule: Math.min(1, rule) });
     }
@@ -346,7 +354,7 @@ export function extractFields(words, { width = 1000, height = 1000, lang = 'es' 
     const b = dates[0];
     fields.date = fieldFrom(b.r, b.d.raw, b.d.iso, b.rule);
     if (b.d.ambiguous) notes.push('date-ambiguous');
-    if (b.d.swapped && !english) notes.push('date-swapped');
+    if (b.d.swapped && !monthFirst) notes.push('date-swapped');
     if (b.d.iso > todayISO()) notes.push('date-future');
   }
 
@@ -389,7 +397,7 @@ export function extractFields(words, { width = 1000, height = 1000, lang = 'es' 
     fields.vendor = fieldFrom(v.r, null, cleanVendor(v.r.text), v.s);
   }
 
-  return { fields, rows, english, notes, currency: detectCurrency(all) };
+  return { fields, rows, english: monthFirst, notes, currency };
 }
 
 export function cleanVendor(t) {

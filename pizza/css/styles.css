@@ -167,7 +167,7 @@ fieldset.panel > legend { font-family: var(--display); font-size: 1.35rem; color
 .menu-link:hover .menu-name { color: var(--tomato-deep); }
 .menu-name { display: block; font-family: var(--display); font-size: clamp(1.35rem, 1.1rem + 1vw, 1.75rem); line-height: 1.12; color: var(--ink); transition: color 0.15s; }
 .menu-blurb { display: block; color: var(--mute); font-size: 0.97rem; line-height: 1.4; margin-top: 4px; max-width: 60ch; }
-.menu-figs { display: grid; grid-template-columns: repeat(3, auto); gap: 4px 22px; text-align: right; }
+.menu-figs { display: grid; grid-template-columns: 4.2rem 5.2rem 8.6rem; gap: 4px 18px; text-align: right; }
 .fig { display: grid; }
 .fig b { font-family: var(--display); font-weight: 400; font-size: 1.2rem; color: var(--basil-deep); white-space: nowrap; }
 .fig small { font-size: 0.8rem; color: var(--mute); white-space: nowrap; }
@@ -183,7 +183,7 @@ fieldset.panel > legend { font-family: var(--display); font-size: 1.35rem; color
 .empty { padding: 28px 8px; display: grid; gap: 14px; justify-items: start; color: var(--mute); }
 @media (max-width: 720px) {
   .menu-link { grid-template-columns: 1fr; }
-  .menu-figs { text-align: left; justify-content: start; }
+  .menu-figs { text-align: left; grid-template-columns: repeat(3, auto); justify-content: start; }
 }
 
 /* ---------- ficha ---------- */
@@ -391,7 +391,8 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline-offs
 
 @media (max-width: 700px) {
   .fascia-in { grid-template-columns: 1fr auto; }
-  .nav { grid-column: 1 / -1; justify-content: space-between; margin: 0 -8px; }
+  .nav { grid-column: 1 / -1; grid-row: 2; justify-content: space-between; margin: 0 -8px; }
+  .lang { grid-row: 1; grid-column: 2; justify-self: end; }
   .nav a { font-size: 1.05rem; padding: 8px 10px; background-position: 10px calc(100% - 5px); }
   .nav a:hover, .nav a[aria-current] { background-size: calc(100% - 20px) 3px; }
   .brand-tag { display: none; }

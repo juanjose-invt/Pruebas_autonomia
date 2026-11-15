@@ -1,6 +1,6 @@
 // Impasto: recetario, calculadora, planificador y configurador de masas de pizza.
 import { t, getLang, setLang, applyStatic, dayLabel, timeLabel } from './i18n.js';
-import { h, icon, toast, confirmDialog, numField, segmented } from './ui.js';
+import { h, put, icon, toast, confirmDialog, numField, segmented } from './ui.js';
 import { store, allRecipes, getRecipe, scaled, saveRecipe, deleteRecipe, duplicateRecipe, isFav, toggleFav } from './store.js';
 import { compute, warnings, fmtG, fmtPct, fmtDuration, convertYeast, YEAST_FACTOR } from './calc.js';
 import { buildSteps, totalMinutes, schedule, loc, STEP_TYPES, TOKENS, isPan } from './steps.js';
@@ -62,7 +62,7 @@ function paramsForm(rec, onChange, idp = 'p') {
       else { rec.yeast = +convertYeast(0.3, 'fresh', to).toFixed(2); }
       rec.leaven = to; build(); fire();
     } }, ['fresh', 'dry', 'instant', 'powder', 'none'].map((k) => h('option', { value: k, selected: rec.leaven === k }, t('leaven.' + k))));
-    wrap.replaceChildren(
+    put(wrap, 
       h('div.grid2',
         numField({ id: idp + '-pizzas', label: t('f.pizzas'), value: rec.pizzas, min: 1, max: 60, step: 1, onChange: (v) => { rec.pizzas = v; fire(); } }),
         numField({ id: idp + '-ball', label: t('f.ball'), value: rec.ball, min: 60, max: 2000, step: 5, unit: 'g', onChange: (v) => { rec.ball = v; fire(); } })),
@@ -114,7 +114,7 @@ function listView() {
       if (filter === 'mine') return !r.builtin || r.modified;
       return r.method === filter || (filter === 'biga' && r.pref === 'biga') || (filter === 'poolish' && r.pref === 'poolish');
     });
-    list.replaceChildren();
+    put(list, );
     if (!recipes.length) {
       list.append(h('li.empty', h('p', t(filter === 'fav' ? 'empty.fav' : filter === 'mine' ? 'empty.mine' : 'empty.filter')),
         filter === 'mine' ? h('a.btn.primary', { href: '#/nueva' }, icon('plus'), t('create')) : null));
@@ -155,7 +155,7 @@ function recipeView(id) {
     const r = scaled(r0), c = compute(r), steps = buildSteps(r, lang(), store.get('plan')?.[id]?.ov || {});
     const setScale = (k, v) => { store.patch('scale', id, { pizzas: r.pizzas, ball: r.ball, [k]: v }); drawKeep(); };
     const isScaled = r.pizzas !== r0.pizzas || r.ball !== r0.ball;
-    body.replaceChildren(
+    put(body, 
       h('section.col-ing', { 'aria-labelledby': 'h-ing' },
         h('h2', { id: 'h-ing' }, t('ingredients')),
         h('div.scaler',
@@ -245,7 +245,7 @@ function calcView(fromId) {
   const nameInput = h('input', { type: 'text', id: 'calc-name', maxlength: 60, value: src ? t('copyOf', { name: loc(src.name, lang()) }) : t('calc.defaultName') });
   const update = () => {
     const c = compute(rec);
-    result.replaceChildren(
+    put(result, 
       h('h2', t('calc.result')),
       h('p.result-total', h('b', fmtG(c.total, lang())), ' ', t('calc.ofDough')),
       ingredientTable(rec, c),
@@ -253,7 +253,7 @@ function calcView(fromId) {
     store.set('calc', rec);
   };
   const formHost = h('div');
-  const mount = () => formHost.replaceChildren(paramsForm(rec, update, 'c'));
+  const mount = () => put(formHost, paramsForm(rec, update, 'c'));
   const select = h('select', { id: 'calc-from', onchange: (e) => {
     const r = getRecipe(e.target.value);
     if (r) { rec = clone(scaled(r)); nameInput.value = t('copyOf', { name: loc(r.name, lang()) }); mount(); update(); }
@@ -307,7 +307,7 @@ function editorView(id) {
   const timesHost = h('div.grid2');
   const drawTimes = () => {
     const leavened = d.leaven !== 'none' && d.leaven !== 'powder';
-    timesHost.replaceChildren(...(leavened ? [
+    put(timesHost, ...(leavened ? [
       d.pref && d.pref !== 'none' ? planNum('prefMin', t('pl.pref'), { hours: true, max: 48, step: 1 }) : null,
       planNum('autolyse', t('pl.autolyse'), { max: 120 }),
       planNum('knead', t('pl.knead'), { max: 40, step: 1 }),
@@ -326,7 +326,7 @@ function editorView(id) {
   };
   const updatePreview = () => {
     const c = compute(d), steps = buildSteps(d, L);
-    preview.replaceChildren(
+    put(preview, 
       h('h2', loc(d.name, L) || t('untitled')),
       h('p.result-total', h('b', fmtG(c.total, L)), ' ', t('calc.ofDough'), ', ', fmtDuration(totalMinutes(steps), L)),
       ingredientTable(d, c), warningList(d));
@@ -335,7 +335,7 @@ function editorView(id) {
     const custom = Array.isArray(d.steps) && d.steps.length;
     if (!custom) {
       const steps = buildSteps(d, L);
-      stepsHost.replaceChildren(
+      put(stepsHost, 
         h('p.hint', t('ed.stepsAuto')),
         h('ol.steps.compact', steps.map((s, i) => h('li', h('span.step-n', { 'aria-hidden': 'true' }, i + 1), h('div', h('h3', s.title, h('span.dur', fmtDuration(s.minutes, L))), h('p', s.text))))),
         h('button.btn', { type: 'button', onclick: () => {
@@ -365,7 +365,7 @@ function editorView(id) {
           numField({ id: idp + '-min', label: t('ed.stepMin'), value: s.minutes, min: 1, max: 7200, step: s.minutes >= 240 ? 30 : 5, unit: 'min', onChange: (v) => { s.minutes = v; if (s.timerMin && !s.rounds) s.timerMin = Math.min(s.timerMin, v); updatePreview(); } })),
         h('div.field', h('label', { for: idp + '-text' }, t('ed.stepText')), tx)));
     });
-    stepsHost.replaceChildren(
+    put(stepsHost, 
       h('p.hint', t('ed.tokens', { list: tokenList })),
       list,
       h('div.row-actions',
@@ -460,7 +460,7 @@ function planView(idArg) {
       out.querySelector(`[data-adj="${s.id}${dir}"]`)?.focus();
     };
     const fits = late ? recipes.filter((x) => x.id !== id && totalMinutes(buildSteps(scaled(x), L)) * 60000 <= eat - now).slice(0, 4) : [];
-    out.replaceChildren(
+    put(out, 
       h('div.plan-summary' + (late ? '.late' : ''),
         h('p.plan-start', late ? t('plan.late') : t('plan.startAt')),
         h('p.plan-big', h('span.clock', timeLabel(sch.start, L)), ' ', h('span.day', dayLabel(sch.start, L))),
@@ -516,7 +516,7 @@ function render() {
   const routes = { '': listView, receta: recipeView, calculadora: calcView, editar: editorView, nueva: () => editorView(null), plan: planView, cocinar: cookView };
   const res = (routes[route] || notFound)(param);
   document.body.classList.toggle('cooking', route === 'cocinar' && !!res.cook);
-  view.replaceChildren(res.el);
+  put(view, res.el);
   destroy = res.destroy || null;
   res.mounted?.();
   document.title = `${res.title} | Impasto`;
