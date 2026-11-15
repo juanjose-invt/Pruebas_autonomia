@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ladea — canicas, madera y gravedad</title>
+<meta name="description" content="Ladea: inclina el tablero de madera y lleva cada canica de cristal a su hoyo. Un juego de puzles de gravedad.">
+<meta name="theme-color" content="#254a4e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preload" href="fonts/dm-serif-display-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<canvas id="gl" tabindex="0" aria-label="Tablero. Usa las flechas del teclado o desliza para inclinarlo."></canvas>
+
+<div class="hud" id="hud">
+  <h1 class="brand">Ladea</h1>
+
+  <div class="settings">
+    <div class="lang" role="group" aria-label="Idioma" id="langGroup">
+      <button type="button" data-lang="es" aria-pressed="true">ES</button>
+      <button type="button" data-lang="en" aria-pressed="false">EN</button>
+    </div>
+    <button type="button" class="chip" id="btnSound" aria-label="Sonido activado. Silenciar">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.2L12 5.5v13l-4.8-4H4z"/><path class="waves" d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.6 7.6 0 0 1 0 11"/><path class="cross" d="M15.5 9.5l5 5m0-5l-5 5"/></svg>
+    </button>
+  </div>
+
+  <div class="level">
+    <p class="level-n"><span id="lvlLabel">Nivel</span> <b id="lvlNum">1</b> <span class="dim"><span id="lvlOf">de</span> <span id="lvlTotal">40</span></span></p>
+    <p class="caption" id="caption" aria-live="polite"></p>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="arrow" id="arrow" hidden>
+      <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M10 24h26M25 12l12 12-12 12"/></svg>
+    </div>
+    <div class="ghost" id="ghost" hidden></div>
+  </div>
+
+  <div class="stats">
+    <p class="moves"><b id="moves">0</b> <span id="movesLabel">movimientos</span></p>
+    <p class="marks"><span id="parTxt">mínimo 2</span><span id="bestTxt">sin récord</span></p>
+  </div>
+
+  <div class="controls">
+    <button type="button" class="disc" id="btnUndo"><span class="face"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 5.5L4 10l4.5 4.5M4.5 10H14a5.5 5.5 0 0 1 0 11h-3"/></svg></span><span class="lbl">Deshacer</span></button>
+    <button type="button" class="disc" id="btnRestart"><span class="face"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.6-5.7M19.8 3.8v4.4h-4.4"/></svg></span><span class="lbl">Reiniciar</span></button>
+    <button type="button" class="disc" id="btnHint"><span class="face"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17.5h6M10 20.5h4M12 3.5a6 6 0 0 0-3.6 10.8c.6.5.9 1.2.9 2v.2h5.4v-.2c0-.8.3-1.5.9-2A6 6 0 0 0 12 3.5z"/></svg></span><span class="lbl">Pista</span></button>
+    <button type="button" class="disc" id="btnLevels"><span class="face"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="1.9"/><circle cx="12" cy="6" r="1.9"/><circle cx="18" cy="6" r="1.9"/><circle cx="6" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="18" cy="12" r="1.9"/><circle cx="6" cy="18" r="1.9"/><circle cx="12" cy="18" r="1.9"/><circle cx="18" cy="18" r="1.9"/></svg></span><span class="lbl">Niveles</span></button>
+  </div>
+
+  <p class="credit"><a href="../">by innovativecode</a></p>
+
+  <div class="plaque" id="plaque" role="status" hidden>
+    <p id="winText"></p>
+    <div class="plaque-actions">
+      <button type="button" class="link" id="btnReplay">Repetir</button>
+      <button type="button" class="paint" id="btnNext">Siguiente nivel</button>
+    </div>
+  </div>
+</div>
+
+<dialog class="tray" id="tray" aria-labelledby="trayTitle">
+  <div class="tray-head">
+    <h2 id="trayTitle">Niveles</h2>
+    <button type="button" class="chip dark" id="btnClose" aria-label="Cerrar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <ol class="pegs" id="pegs"></ol>
+  <p class="legend" id="legend"></p>
+</dialog>
+
+<noscript><p class="noscript">Ladea necesita JavaScript para funcionar. / Ladea needs JavaScript to run.</p></noscript>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

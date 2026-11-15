@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Corcho, tablero kanban personal</title>
+  <meta name="description" content="Tablero kanban personal de corcho y pósits. Funciona sin conexión y guarda los datos solo en tu navegador.">
+  <meta name="theme-color" content="#1d453f">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="preload" href="fonts/caveat-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="rail">
+    <input id="board-title" class="board-title" type="text" maxlength="80" autocomplete="off" spellcheck="false" data-i18n-label="boardTitleLabel">
+    <div class="rail-actions">
+      <button type="button" class="rail-btn" id="btn-add-col" data-i18n-label="addColumnLong">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        <span data-i18n="addColumn"></span>
+      </button>
+      <button type="button" class="rail-btn" id="btn-export" data-i18n-label="exportLong">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5M5 15v4h14v-4"/></svg>
+        <span data-i18n="export"></span>
+      </button>
+      <button type="button" class="rail-btn" id="btn-import" data-i18n-label="importLong">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 15v4h14v-4"/></svg>
+        <span data-i18n="import"></span>
+      </button>
+      <input type="file" id="import-file" accept="application/json,.json" hidden>
+      <div class="lang" role="group" data-i18n-label="language">
+        <button type="button" data-lang="es" aria-pressed="true" aria-label="Español">ES</button>
+        <button type="button" data-lang="en" aria-pressed="false" aria-label="English">EN</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="board" class="board">
+    <div id="columns" class="columns"></div>
+  </main>
+
+  <footer class="rail-foot">
+    <a class="signature" href="../" data-i18n="signature" data-i18n-label="signatureLabel"></a>
+  </footer>
+
+  <dialog id="editor" class="editor" aria-labelledby="editor-heading">
+    <form id="editor-form" method="dialog" novalidate>
+      <span class="pin editor-pin" aria-hidden="true"></span>
+      <h2 id="editor-heading" class="visually-hidden" data-i18n="editorTitle"></h2>
+
+      <label class="field">
+        <span class="field-label" data-i18n="fieldTitle"></span>
+        <textarea id="ed-title" class="ed-title" rows="1" maxlength="300"></textarea>
+      </label>
+
+      <label class="field">
+        <span class="field-label" data-i18n="fieldNotes"></span>
+        <textarea id="ed-notes" class="ed-notes" rows="2" maxlength="4000"></textarea>
+      </label>
+
+      <fieldset class="field">
+        <legend class="field-label" data-i18n="fieldColor"></legend>
+        <div id="ed-colors" class="swatches"></div>
+      </fieldset>
+
+      <fieldset class="field">
+        <legend class="field-label" data-i18n="fieldLabels"></legend>
+        <div id="ed-labels" class="tag-toggles"></div>
+        <button type="button" id="ed-rename-labels" class="link-btn" aria-pressed="false" data-i18n="renameLabels"></button>
+      </fieldset>
+
+      <div class="field-row">
+        <div class="field">
+          <label class="field-label" for="ed-due" data-i18n="fieldDue"></label>
+          <div class="due-row">
+            <input type="date" id="ed-due" class="ed-input">
+            <button type="button" id="ed-due-clear" class="icon-btn" data-i18n-label="clearDate">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label" for="ed-column" data-i18n="fieldColumn"></label>
+          <select id="ed-column" class="ed-input"></select>
+        </div>
+        <div class="field">
+          <span class="field-label" id="ed-pos-label" data-i18n="fieldPosition"></span>
+          <div class="pos-row" role="group" aria-labelledby="ed-pos-label">
+            <button type="button" id="ed-up" class="icon-btn" data-i18n-label="moveUp">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+            </button>
+            <output id="ed-pos" class="ed-pos"></output>
+            <button type="button" id="ed-down" class="icon-btn" data-i18n-label="moveDown">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="editor-actions">
+        <button type="button" id="ed-delete" class="link-btn danger" data-i18n="deleteNote"></button>
+        <span class="spacer"></span>
+        <button type="button" id="ed-cancel" class="paper-btn" data-i18n="cancel"></button>
+        <button type="submit" id="ed-save" class="paper-btn primary" data-i18n="save"></button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <div id="live" class="visually-hidden" aria-live="assertive"></div>
+  <p id="note-hint" class="visually-hidden" data-i18n="noteHint"></p>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

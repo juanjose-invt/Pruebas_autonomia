@@ -1,0 +1,4 @@
+# Salida del build del portfolio (se genera con: node scripts/build.mjs)
+_site/
+node_modules/
+.DS_Store
