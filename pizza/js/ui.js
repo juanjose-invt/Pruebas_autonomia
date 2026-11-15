@@ -51,6 +51,9 @@ const PATHS = {
   up: '<path d="M6 14l6-6 6 6"/>',
   down: '<path d="M6 10l6 6 6-6"/>',
   oven: '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 9h16M8 6.5h0M12 6.5h0"/><rect x="8" y="12" width="8" height="5" rx="1"/>',
+  sceneOff: '<path d="M8 4.5h11a1.5 1.5 0 0 1 1.5 1.5v10M20 19.5H5A1.5 1.5 0 0 1 3.5 18V6"/><path d="M3 3l18 18"/>',
+  sceneS: '<rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><rect x="6.5" y="7.5" width="6" height="4.5" rx="0.5"/>',
+  sceneL: '<rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><rect x="6.5" y="7.5" width="11" height="9" rx="0.5"/>',
   check: '<path d="M5 12.5l4.5 4.5L19 7"/>',
   restore: '<path d="M4 12a8 8 0 1 0 2.5-5.8"/><path d="M4 4v4h4"/>',
 };

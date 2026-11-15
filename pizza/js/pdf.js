@@ -30,7 +30,7 @@ async function loadFont() {
   return fontB64;
 }
 
-const TOMATO = [197, 48, 30], BASIL = [47, 107, 58], INK = [28, 43, 32], CREAM = [251, 246, 234], MUTE = [92, 104, 94];
+const TOMATO = [197, 48, 30], BASIL = [47, 107, 58], INK = [28, 43, 32], CREAM = [248, 242, 227], MUTE = [92, 104, 94];
 
 export async function buildPdf(r, overrides = {}) {
   const lang = getLang();
@@ -67,7 +67,8 @@ export async function buildPdf(r, overrides = {}) {
   doc.setFont('Abril', 'normal'); doc.setFontSize(26);
   const titleLines = doc.splitTextToSize(name, cw);
   const bandH = 33 + titleLines.length * 10.5;
-  doc.setFillColor(...TOMATO); doc.rect(0, 0, W, bandH, 'F');
+  doc.setFillColor(...BASIL); doc.rect(0, 0, W, bandH, 'F');
+  doc.setFillColor(...TOMATO); doc.rect(0, bandH, W, 1.4, 'F');
   doc.setTextColor(...CREAM); doc.setFontSize(11);
   doc.text('Impasto', mx, 13);
   doc.setFontSize(26);

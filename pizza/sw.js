@@ -1,5 +1,5 @@
 // Service worker: guarda la app en caché para que funcione sin conexión.
-const CACHE = 'impasto-v1';
+const CACHE = 'impasto-v2';
 const FILES = [
   './',
   'index.html',

@@ -25,6 +25,9 @@ export function cookView(id) {
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let use3d = webglAvailable() && !store.get('no3d');
   let scene = null, sceneLoading = null, disposed = false;
+  // Tamaño de la escena elegido por el usuario: oculta, pequeña o grande. Se recuerda.
+  const SIZES = ['off', 's', 'l'];
+  let size = SIZES.includes(store.get('stage')) ? store.get('stage') : 's';
 
   const stage = h('div.stage');
   const canvas = h('canvas.stage-canvas', { role: 'img' });
@@ -43,11 +46,18 @@ export function cookView(id) {
   const text = h('p.cook-text');
   const timerBox = h('div.timer');
   const others = h('div.others');
+  const longHint = h('p.hint.cook-hint');
   const dots = h('ol.dots', { 'aria-label': t('cook.steps') });
-  const prevBtn = h('button.btn.big', { type: 'button' }, icon('back'), t('cook.prev'));
+  const prevBtn = h('button.btn.big', { type: 'button', 'aria-label': t('cook.prev') }, icon('back'), h('span.lbl', t('cook.prev')));
   const nextBtn = h('button.btn.primary.big', { type: 'button' });
   const soundBtn = h('button.iconbtn', { type: 'button' });
   const wakeChip = h('span.wake');
+  const sizeBtns = SIZES.map((v) => h('button.seg-ico', {
+    type: 'button', 'data-size': v, 'aria-label': t(v === 'off' ? 'cook.sceneOff' : v === 's' ? 'cook.sceneS' : 'cook.sceneL'),
+    title: t(v === 'off' ? 'cook.sceneOff' : v === 's' ? 'cook.sceneS' : 'cook.sceneL'),
+    onclick: () => setSize(v),
+  }, icon(v === 'off' ? 'sceneOff' : v === 's' ? 'sceneS' : 'sceneL')));
+  const sizeGroup = h('div.scene-size', { role: 'group', 'aria-label': t('cook.scene') }, h('span.scene-size-lbl', { 'aria-hidden': 'true' }, t('cook.scene')), sizeBtns);
 
   const key = (i) => `${id}|${steps[i].id}`;
   const setPlayIcon = () => {
@@ -79,8 +89,9 @@ export function cookView(id) {
     tag.hidden = !lapse;
     modeBtn.textContent = use3d ? t('cook.toDiagram') : t('cook.to3d');
     modeBtn.hidden = !webglAvailable();
+    if (size === 'off') { scene?.pause(); setPlayIcon(); return; }
     if (use3d) await ensureScene();
-    if (disposed) return;
+    if (disposed || size === 'off') return;
     stage.classList.toggle('is-3d', !!(use3d && scene));
     if (use3d && scene) {
       canvas.setAttribute('aria-label', desc);
@@ -110,15 +121,19 @@ export function cookView(id) {
     const round = s.rounds && tm?.round ? h('span.round', t('timer.round', { k: Math.min(tm.round, s.rounds), n: s.rounds })) : null;
     const add = total >= 3600 ? 15 : total >= 600 ? 5 : 1;
     timerBox.className = 'timer' + (running ? ' running' : '') + (done ? ' done' : '');
-    put(timerBox, 
+    // Los botones se recrean al cambiar de estado: si uno tenía el foco, se devuelve al nuevo.
+    const hadFocus = timerBox.contains(document.activeElement) ? document.activeElement.dataset.act : null;
+    put(timerBox,
       h('div.timer-main', big, h('p.timer-status', { 'aria-live': 'polite' }, status, round)),
       h('div.timer-actions',
         running
-          ? h('button.btn', { type: 'button', onclick: () => { T.pauseTimer(k); drawTimer(); } }, icon('pause'), t('timer.pause'))
-          : h('button.btn.go', { type: 'button', onclick: () => { if (done) T.resetTimer(k); T.startTimer(k, total, `${index + 1}. ${loc(s.title, L)}`); drawTimer(); } }, icon('play'), done ? t('timer.again') : tm ? t('timer.resume') : t('timer.start')),
-        h('button.btn', { type: 'button', disabled: !tm, onclick: () => { T.addTime(k, add * 60); drawTimer(); } }, icon('plus'), t('timer.add', { n: add })),
-        h('button.btn.ghost', { type: 'button', disabled: !tm, onclick: () => { T.resetTimer(k); drawTimer(); } }, icon('reset'), t('timer.reset'))),
-      total >= 3600 ? h('p.hint', t('timer.longHint')) : null);
+          ? h('button.btn.big.t-main', { type: 'button', 'data-act': 'main', onclick: () => { T.pauseTimer(k); drawTimer(); } }, icon('pause'), t('timer.pause'))
+          : h('button.btn.go.big.t-main', { type: 'button', 'data-act': 'main', 'aria-label': done ? null : tm ? null : t('timer.startLong'), onclick: () => { if (done) T.resetTimer(k); T.startTimer(k, total, `${index + 1}. ${loc(s.title, L)}`); drawTimer(); } }, icon('play'), done ? t('timer.again') : tm ? t('timer.resume') : t('timer.start')),
+        h('button.btn.big', { type: 'button', 'data-act': 'add', disabled: !tm, 'aria-label': t('timer.add', { n: add }), onclick: () => { T.addTime(k, add * 60); drawTimer(); } }, t('timer.addShort', { n: add })),
+        h('button.btn.big.t-reset', { type: 'button', 'data-act': 'reset', disabled: !tm, 'aria-label': t('timer.reset'), title: t('timer.reset'), onclick: () => { T.resetTimer(k); drawTimer(); } }, icon('reset'), h('span.lbl', t('timer.reset')))));
+    if (hadFocus) timerBox.querySelector(`[data-act="${hadFocus}"]:not(:disabled)`)?.focus({ preventScroll: true });
+    longHint.textContent = total >= 3600 ? t('timer.longHint') : '';
+    longHint.hidden = total < 3600;
     // Otros temporizadores de esta receta que siguen en marcha.
     const run = steps.map((st, i) => ({ st, i, tm: T.getTimer(key(i)) })).filter((x) => x.i !== index && x.tm && (x.tm.running || x.tm.done));
     put(others, ...run.map((x) => h('button.other', { type: 'button', onclick: () => goTo(x.i) },
@@ -167,6 +182,12 @@ export function cookView(id) {
   });
   playBtn.addEventListener('click', () => { if (!scene) return; if (scene.playing) scene.pause(); else scene.play(); setPlayIcon(); });
   scrub.addEventListener('input', () => { if (!scene) return; scene.pause(); scene.setProgress(scrub.value / 1000); setPlayIcon(); });
+  function setSize(v, init) {
+    size = v;
+    el.dataset.stage = v;
+    sizeBtns.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.size === v)));
+    if (!init) { store.set('stage', v); showStage(); }
+  }
   modeBtn.addEventListener('click', () => { use3d = !use3d; store.set('no3d', !use3d); showStage(); });
   const drawSound = () => {
     const on = !!store.get('sound');
@@ -190,16 +211,20 @@ export function cookView(id) {
   const offTimers = T.onTimers(tickTimer);
   const offWake = T.onWakeChange(drawWake);
 
+  // Rejilla plana: cabecera, pasos, escena, lectura, temporizador y navegación.
+  // La hoja de estilo coloca cada zona según el tamaño y la orientación de la pantalla;
+  // el temporizador y los botones de paso nunca quedan dentro de la zona que se desplaza.
   const el = h('div.cook',
     h('header.cook-top',
       h('a.iconbtn', { href: '#/receta/' + id, 'aria-label': t('cook.exit') }, icon('close')),
       h('div.cook-where', h('p.cook-recipe', loc(r.name, L)), stepNo),
-      wakeChip, soundBtn),
+      wakeChip, sizeGroup, soundBtn),
     dots,
-    h('div.cook-body',
-      h('div.cook-stage', stage, caption),
-      h('div.cook-panel', title, meta, text, timerBox, others)),
+    h('div.cook-stage', stage, caption),
+    h('div.cook-panel', title, meta, text, others, longHint),
+    h('section.cook-dock', { 'aria-label': t('cook.timer') }, timerBox),
     h('footer.cook-nav', prevBtn, nextBtn));
+  setSize(size, true);
 
   return {
     title: t('cook.title', { name: loc(r.name, L) }), el, cook: true,
