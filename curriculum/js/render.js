@@ -234,7 +234,8 @@ function renderBody(body, s, def, { t, lang, d, toSide }) {
       } else if (style === 'stack') {
         hd.append(el('strong', 'ent-t', title || org), title && sub ? el('div', 'ent-s', sub) : null, dates ? el('div', 'ent-d', dates) : null);
       } else if (style === 'compact') {
-        hd.append(el('div', 'ent-r', [el('span', 'ent-c', [el('strong', 'ent-t', title || org), title && sub ? ', ' + sub : '']), dates ? el('span', 'ent-d', dates) : null]));
+        const right = [def.single ? place : '', dates].filter(Boolean).join(', ');
+        hd.append(el('div', 'ent-r', [el('span', 'ent-c', [el('strong', 'ent-t', title || org), title && (def.single ? org : sub) ? ', ' + (def.single ? org : sub) : '']), right ? el('span', 'ent-d', right) : null]));
       } else if (style === 'ctable') {
         hd.append(el('strong', 'ent-t', title), el('span', 'ent-s', org), el('span', 'ent-x', place), el('span', 'ent-d', dates));
       } else {

@@ -1,0 +1,18 @@
+{
+  "name": "Currículum · creador de currículums",
+  "short_name": "Currículum",
+  "description": "Crea tu currículum con plantillas por sectores y de estilo europeo, y descárgalo en PDF. Tus datos se quedan en el dispositivo.",
+  "lang": "es",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#2F5E4F",
+  "theme_color": "#1C3B31",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

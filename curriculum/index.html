@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <title>Currículum · creador de currículums</title>
+  <meta name="description" content="Crea tu currículum con plantillas por sectores y de estilo europeo, y descárgalo en PDF. Funciona en el navegador y tus datos no salen del dispositivo.">
+  <meta name="theme-color" content="#1C3B31">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="preload" href="fonts/atkinson-hyperlegible-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/atkinson-hyperlegible-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/fonts.css">
+  <link rel="stylesheet" href="css/sheet.css">
+  <link rel="stylesheet" href="css/app.css">
+  <script type="module" src="js/app.js"></script>
+</head>
+<body data-view="home">
+  <a class="skip" id="skip" href="#main">Saltar al contenido</a>
+  <header class="appbar" id="appbar"></header>
+  <main id="main" tabindex="-1"></main>
+  <footer class="foot">
+    <p id="f-local">Tus datos y tu foto no salen de este dispositivo: no hay servidor ni cuentas.</p>
+    <p id="f-offline">Funciona sin conexión una vez abierta.</p>
+    <a class="seal" href="../">by innovativecode</a>
+  </footer>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <noscript><p class="noscript">Esta aplicación necesita JavaScript para funcionar.</p></noscript>
+</body>
+</html>
