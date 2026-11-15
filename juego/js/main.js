@@ -43,15 +43,17 @@ try {
 document.documentElement.style.setProperty('--wood', `url(${scene.woodURL('light')})`);
 
 // ---------- estado ----------
-const G = { idx: 0, L: null, pos: [], history: [], moves: 0, busy: true, failed: null, queued: -1, won: false, touched: false };
+const G = { gen: 0, idx: 0, L: null, pos: [], history: [], moves: 0, busy: true, failed: null, queued: -1, won: false, touched: false };
 
 async function loadLevel(idx, mode) {
   G.idx = idx; G.L = build(LEVELS[idx]); G.pos = G.L.start.slice();
   G.history = []; G.moves = 0; G.failed = null; G.queued = -1; G.won = false; G.busy = true;
-  data.current = idx; persist();
-  hidePlaque(); hideArrow();
+  const gen = ++G.gen;                 // si se cambia de nivel a mitad de algo, lo anterior se descarta
+  hidePlaque(); hideArrow(); hideGhost();
   renderHud(); showCaption();
+  data.current = idx; persist();
   await scene.setLevel(G.L, G.pos, mode);
+  if (gen !== G.gen) return;
   G.busy = false;
   if (idx === 0 && !G.touched) showGhost();
   if (G.queued >= 0) { const d = G.queued; G.queued = -1; doTilt(d); }
@@ -68,7 +70,9 @@ async function doTilt(d) {
   G.history.push({ pos: G.pos, moves: G.moves });
   G.pos = r.pos; G.moves++; G.busy = true;
   renderHud();
+  const gen = G.gen;
   await scene.animateMove(d, r.paths);
+  if (gen !== G.gen) return;
   G.busy = false;
   if (r.fail) {
     const bad = r.paths.find((p) => p.end === 'pit' || p.end === 'wrong');
@@ -96,7 +100,8 @@ function win() {
   if (record && prev !== undefined) msg += ' ' + t().winRecord;
   if (last) msg += ' ' + t().allDone;
   G.winMsg = { perfect, record: record && prev !== undefined, moves: G.moves };
-  setTimeout(() => { if (G.won) showPlaque(msg); }, reducedMQ.matches ? 150 : 650);
+  const gen = G.gen;
+  setTimeout(() => { if (G.won && gen === G.gen) showPlaque(msg); }, reducedMQ.matches ? 150 : 650);
 }
 
 async function undo() {
@@ -104,14 +109,16 @@ async function undo() {
   const h = G.history.pop();
   G.pos = h.pos; G.moves = h.moves; G.failed = null; G.queued = -1;
   audio.tap(); hideArrow(); showCaption(); renderHud();
-  G.busy = true; await scene.moveMarblesTo(G.pos); G.busy = false;
+  const gen = G.gen;
+  G.busy = true; await scene.moveMarblesTo(G.pos); if (gen === G.gen) G.busy = false;
 }
 async function restart() {
   if (G.busy && !G.won) return;
   if (!G.history.length && !G.won) return;
   G.pos = G.L.start.slice(); G.history = []; G.moves = 0; G.failed = null; G.queued = -1; G.won = false;
   audio.tap(); hidePlaque(); hideArrow(); showCaption(); renderHud();
-  G.busy = true; await scene.moveMarblesTo(G.pos); G.busy = false;
+  const gen = G.gen;
+  G.busy = true; await scene.moveMarblesTo(G.pos); if (gen === G.gen) G.busy = false;
 }
 function hint() {
   if (G.busy || G.won) return;
@@ -149,6 +156,7 @@ function renderHud() {
   $('parTxt').textContent = `${s.min} ${par}`;
   $('bestTxt').textContent = best === undefined ? s.noBest : `${s.best} ${best}`;
   $('btnUndo').disabled = !G.history.length || G.won;
+  if ($('btnUndo').disabled) $('btnUndo').classList.remove('call');
   $('btnRestart').disabled = !G.history.length && !G.won;
   $('btnHint').disabled = G.won;
 }
@@ -309,4 +317,4 @@ if ('serviceWorker' in navigator) {
 }
 
 // Asa mínima para pruebas automáticas (solo lectura).
-window.__ladea = { get state() { return { idx: G.idx, pos: G.pos.slice(), moves: G.moves, busy: G.busy, won: G.won, failed: G.failed }; }, perf: () => scene.perf(), _scene: scene };
+window.__ladea = { get state() { return { idx: G.idx, pos: G.pos.slice(), moves: G.moves, busy: G.busy, won: G.won, failed: G.failed }; }, perf: () => scene.perf() };

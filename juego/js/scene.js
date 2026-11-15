@@ -3,10 +3,10 @@ import * as THREE from '../vendor/three.min.js';
 import { DONE, BLOCK, PIT, FELT, DIRS } from './engine.js';
 import { rng } from './generator.js';
 
-const R = 0.34;            // radio de la canica (la casilla mide 1)
-const HOLE = 0.425;        // radio de los hoyos
+const R = 0.33;            // radio de la canica (la casilla mide 1)
+const HOLE = 0.4;          // radio de los hoyos
 const FRAME = 0.4;         // ancho del marco
-const MAX_TILT = 0.2;      // ~11,5°
+const MAX_TILT = 0.23;     // ~13°
 const ACCEL = 34;          // casillas/s² con el tablero inclinado a tope
 const DRAG = 0.9;
 export const MARBLE_COLORS = ['#f2a20c', '#2358e0', '#d61f45'];
@@ -312,7 +312,7 @@ export function createScene(canvas, hooks = {}) {
       cyl.position.set(cx(c), -depth / 2, cz(c));
       const fl = add(new THREE.CircleGeometry(HOLE + 0.02, 30).rotateX(-Math.PI / 2), pit ? mPitFloor : cupMats[L.cup[c]].floor, false, !pit);
       fl.position.set(cx(c), -depth, cz(c));
-      const ring = add(new THREE.RingGeometry(HOLE + 0.03, pit ? HOLE + 0.085 : HOLE + 0.13, 40).rotateX(-Math.PI / 2), pit ? mScorch : ringMats[L.cup[c]], false, true);
+      const ring = add(new THREE.RingGeometry(HOLE + 0.03, pit ? HOLE + 0.08 : 0.5, 40).rotateX(-Math.PI / 2), pit ? mScorch : ringMats[L.cup[c]], false, true);
       ring.position.set(cx(c), 0.004, cz(c));
     }
     // fieltros y tacos
@@ -448,7 +448,7 @@ export function createScene(canvas, hooks = {}) {
       }
     }
     last = t; frames++;
-    anims = anims.filter((fn) => !fn(dt));
+    anims = anims.filter((a) => { const done = a.fn(dt); if (done) a.res(); return !done; });
     // muelle del tablero: pesado, con un pelín de rebote
     const K = 150, C = 17;
     const tx = tiltS.tx + preview.x, tz = tiltS.tz + preview.z;
@@ -463,7 +463,9 @@ export function createScene(canvas, hooks = {}) {
     if (anims.length || moving) raf = requestAnimationFrame(frame);
     else { tiltS.x = tx; tiltS.z = tz; }
   }
-  const run = (fn) => new Promise((res) => { anims.push((dt) => { const done = fn(dt); if (done) res(); return done; }); kick(); });
+  const run = (fn) => new Promise((res) => { anims.push({ fn, res }); kick(); });
+  /** Corta lo que esté en marcha (por ejemplo, al saltar a otro nivel a mitad de un movimiento). */
+  function cancelAnims() { const old = anims; anims = []; old.forEach((a) => a.res()); hooks.onRoll && hooks.onRoll(0); }
 
   function setTiltTarget(d, amount) {
     tiltS.tx = 0; tiltS.tz = 0;
@@ -542,7 +544,7 @@ export function createScene(canvas, hooks = {}) {
               } else {
                 const sp = b.v;
                 if (sp > 0.8) hooks.onImpact && hooks.onImpact(end, sp);
-                if (sp > 2.5 && !fast) kickBoard(d, sp * (end === 'wall' ? 0.012 : 0.004));
+                if (sp > 2.5 && !fast) kickBoard(d, sp * (end === 'wall' ? 0.03 : 0.012));
                 b.v = fast ? 0 : -sp * 0.3;
                 if (Math.abs(b.v) < 0.7) { b.v = 0; if (a > 0 && sp < 0.75) b.state = 'rest'; }
               }
@@ -594,8 +596,8 @@ export function createScene(canvas, hooks = {}) {
     });
   }
   function kickBoard(d, amt) {
-    if (d === 0) tiltS.vz -= amt * 60; else if (d === 2) tiltS.vz += amt * 60;
-    else if (d === 1) tiltS.vx += amt * 60; else tiltS.vx -= amt * 60;
+    if (d === 0) tiltS.vz -= amt; else if (d === 2) tiltS.vz += amt;
+    else if (d === 1) tiltS.vx += amt; else tiltS.vx -= amt;
   }
 
   /** Deshacer / reiniciar: las canicas vuelven de un saltito, como colocadas a mano. */
@@ -655,6 +657,7 @@ export function createScene(canvas, hooks = {}) {
 
   /** Cambia de nivel dando la vuelta al tablero: el nuevo está en la otra cara. */
   function setLevel(level, pos, mode) {
+    cancelAnims();
     tiltS.tx = tiltS.tz = 0;
     if (mode !== 'flip' || reduced() || !boardG) {
       buildBoard(level);
@@ -679,7 +682,6 @@ export function createScene(canvas, hooks = {}) {
   return {
     setLevel, animateMove, moveMarblesTo, nudge, setPreview, setStage, resize, kick,
     woodURL: (kind) => (kind === 'dark' ? walnutCanvas : kind === 'mid' ? cherryCanvas : beechCanvas).toDataURL('image/jpeg', 0.8),
-    _dbg: { renderer, sun, table, scene, camera, THREE, mats: { mBeech, mFrame } },
     perf: () => ({ frames, avg: frameMs.length ? frameMs.reduce((a, b) => a + b, 0) / frameMs.length : 0, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }),
   };
 }

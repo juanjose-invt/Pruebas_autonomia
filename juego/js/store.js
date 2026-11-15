@@ -1,6 +1,6 @@
 // Progreso y preferencias en localStorage, con red de seguridad si el almacenamiento falla.
 const KEY = 'ladea.v1';
-const base = { lang: 'es', muted: false, current: 0, unlocked: 0, best: {}, seenHelp: false };
+const base = { lang: 'es', muted: false, current: 0, unlocked: 0, best: {} };
 
 export function load() {
   try {
