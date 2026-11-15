@@ -1,0 +1,12 @@
+{
+  "name": "cuaderno-de-campo",
+  "private": true,
+  "type": "module",
+  "description": "Portfolio con blog: cuaderno de campo. Build estático sin dependencias.",
+  "scripts": {
+    "build": "node scripts/build.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
