@@ -49,16 +49,28 @@ export function geometria({ n, m }, op) {
     }
     return c >= placa.x && c < placa.x + placa.s && r >= placa.y && r < placa.y + placa.s;
   };
+  // Patrones de alineación (los cuadraditos interiores): se pintan siempre rectos
+  // y macizos, porque los lectores los usan para corregir la perspectiva.
+  const ver = (n - 17) / 4;
+  const ejes = [];
+  if (ver >= 2) {
+    const num = Math.floor(ver / 7) + 2;
+    const paso = ver === 32 ? 26 : Math.ceil((ver * 4 + 4) / (num * 2 - 2)) * 2;
+    ejes.push(6);
+    for (let pos = ver * 4 + 10; ejes.length < num; pos -= paso) ejes.splice(1, 0, pos);
+  }
+  const esAlineacion = (r, c) => ejes.some((y) => Math.abs(r - y) <= 2 && ejes.some((x) => Math.abs(c - x) <= 2 && !esBuscador(y, x)));
   const on = (r, c) => r >= 0 && c >= 0 && r < n && c < n && m[r][c] && !esBuscador(r, c) && !enPlaca(r, c);
 
   let puntos = '';
   for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
     if (!on(r, c)) continue;
+    if (esAlineacion(r, c)) { puntos += `M${c} ${r}h1v1h-1Z`; continue; }
     const u = on(r - 1, c), d = on(r + 1, c), l = on(r, c - 1), rg = on(r, c + 1);
     switch (op.puntos) {
-      case 'redondo': puntos += circ(c + 0.5, r + 0.5, 0.45); break;
+      case 'redondo': puntos += circ(c + 0.5, r + 0.5, 0.48); break;
       case 'fluido': puntos += rr(c, r, 1, 1, !u && !l ? 0.5 : 0, !u && !rg ? 0.5 : 0, !d && !rg ? 0.5 : 0, !d && !l ? 0.5 : 0); break;
-      case 'barras': puntos += rr(c + 0.1, r, 0.8, 1, u ? 0 : 0.4, u ? 0 : 0.4, d ? 0 : 0.4, d ? 0 : 0.4); break;
+      case 'barras': { const w = 0.8, q = w / 2; puntos += rr(c + (1 - w) / 2, r, w, 1, u ? 0 : q, u ? 0 : q, d ? 0 : q, d ? 0 : q); break; }
       default: puntos += `M${c} ${r}h1v1h-1Z`;
     }
   }

@@ -10,7 +10,7 @@ const T = {
     logo: 'Imagen central', subirLogo: 'Elegir logo o foto', cambiar: 'Cambiar imagen', quitar: 'Quitar', tamLogo: 'Tamaño de la imagen', formaLogo: 'Recorte',
     cuadrado: 'Cuadrado', redondo: 'Redondo', local: 'La imagen se procesa en este dispositivo; no se sube a ningún sitio.',
     puntos: 'Puntos', formaPuntos: 'Forma de los puntos', pts: { cuadrado: 'Cuadrados', redondo: 'Redondos', fluido: 'Fluidos', barras: 'Barras' },
-    esquinas: 'Esquinas', marco: 'Marco de las esquinas', centro: 'Centro de las esquinas', esq: { cuadrado: 'Recto', redondeado: 'Suave', circulo: 'Círculo' },
+    esquinas: 'Esquinas', formaEsquinas: 'Forma de las esquinas', esq: { cuadrado: 'Rectas', redondeado: 'Suaves', circulo: 'Redondas' },
     colores: 'Colores', colPuntos: 'Puntos', colEsquinas: 'Esquinas', colFondo: 'Fondo', otro: 'Otro color',
     fondo: 'Foto de fondo', subirFondo: 'Elegir foto de fondo', velo: 'Aclarar la foto',
     vista: 'Vista previa del código QR',
@@ -33,7 +33,7 @@ const T = {
     logo: 'Centre image', subirLogo: 'Choose a logo or photo', cambiar: 'Change image', quitar: 'Remove', tamLogo: 'Image size', formaLogo: 'Crop',
     cuadrado: 'Square', redondo: 'Round', local: 'The image is processed on this device; it is not uploaded anywhere.',
     puntos: 'Dots', formaPuntos: 'Dot shape', pts: { cuadrado: 'Square', redondo: 'Round', fluido: 'Fluid', barras: 'Bars' },
-    esquinas: 'Corners', marco: 'Corner frame', centro: 'Corner centre', esq: { cuadrado: 'Sharp', redondeado: 'Soft', circulo: 'Circle' },
+    esquinas: 'Corners', formaEsquinas: 'Corner shape', esq: { cuadrado: 'Sharp', redondeado: 'Soft', circulo: 'Round' },
     colores: 'Colours', colPuntos: 'Dots', colEsquinas: 'Corners', colFondo: 'Background', otro: 'Other colour',
     fondo: 'Background photo', subirFondo: 'Choose a background photo', velo: 'Lighten the photo',
     vista: 'QR code preview',
@@ -121,7 +121,7 @@ function luminancia(hex) {
 
 export function mount(raiz) {
   const t = tr(T);
-  const st = Object.assign({ tipo: 'texto', texto: 'Cinco hojas', url: '', puntos: 'cuadrado', marco: 'cuadrado', centro: 'cuadrado',
+  const st = Object.assign({ tipo: 'texto', texto: 'Cinco hojas', url: '', puntos: 'cuadrado', esquinas: 'cuadrado',
     colPuntos: TINTAS[0], colEsquinas: TINTAS[1], colFondo: FONDOS[0], logoFrac: 0.24, logoForma: 'cuadrado', velo: 0.6, tam: 1024 }, store.get('qr', {}));
   const guardar = () => store.set('qr', st);
   let vivo = true, espera = 0, serie = 0;
@@ -152,7 +152,7 @@ export function mount(raiz) {
     let mat;
     try { mat = matriz(payload, nivel); } catch { ctx.clearRect(0, 0, 840, 840); lienzo.dataset.vacio = '1'; datos.textContent = ''; ponerEstado('largo'); return; }
     delete lienzo.dataset.vacio;
-    const g = geometria(mat, { puntos: st.puntos, marco: st.marco, centro: st.centro, logo: memoria.logo ? { frac: st.logoFrac, forma: st.logoForma } : null });
+    const g = geometria(mat, { puntos: st.puntos, marco: st.esquinas, centro: st.esquinas, logo: memoria.logo ? { frac: st.logoFrac, forma: st.logoForma } : null });
     const est = { colPuntos: st.colPuntos, colEsquinas: st.colEsquinas, colFondo: st.colFondo, velo: st.velo,
       logo: memoria.logo?.lienzo || null, fondo: memoria.fondo?.lienzo || null, logoURL: memoria.logo?.url, fondoURL: memoria.fondo?.url };
     pintarCanvas(ctx, 840, g, est);
@@ -232,11 +232,11 @@ export function mount(raiz) {
       } });
     function pintar() {
       const hay = memoria[clave];
-      caja.replaceChildren(
+      caja.replaceChildren(...[
         hay ? h('img', { class: 'subida__mini', src: hay.url, alt: '' }) : null,
         h('label', { class: 'btn btn--acero subida__btn', for: input.id }, icon(hay ? 'imagen' : 'subir', 20), hay ? t.cambiar : textoSubir),
         input,
-        hay ? h('button', { type: 'button', class: 'btn btn--linea', id: `qr-${clave}-quitar`, onclick: () => { memoria[clave] = null; pintar(); pintarExtras(); generar(); } }, icon('papelera', 20), t.quitar) : null);
+        hay ? h('button', { type: 'button', class: 'btn btn--linea', id: `qr-${clave}-quitar`, onclick: () => { memoria[clave] = null; pintar(); pintarExtras(); generar(); } }, icon('papelera', 20), t.quitar) : null].filter(Boolean));
     }
     pintar();
     return caja;
@@ -283,10 +283,7 @@ export function mount(raiz) {
         campos),
       seccion(t.logo, subida('logo', t.subirLogo, 512, false), extrasLogo, h('p', { class: 'nota-pie' }, t.local)),
       seccion(t.puntos, segmented({ label: t.formaPuntos, valor: st.puntos, opciones: op3(t.pts), onChange: (v) => { st.puntos = v; programar(); } })),
-      seccion(t.esquinas,
-        h('div', { class: 'qr__dos' },
-          h('div', { class: 'campo' }, h('span', { class: 'rot' }, t.marco), segmented({ label: t.marco, valor: st.marco, opciones: op3(t.esq), onChange: (v) => { st.marco = v; programar(); } })),
-          h('div', { class: 'campo' }, h('span', { class: 'rot' }, t.centro), segmented({ label: t.centro, valor: st.centro, opciones: op3(t.esq), onChange: (v) => { st.centro = v; programar(); } })))),
+      seccion(t.esquinas, segmented({ label: t.formaEsquinas, valor: st.esquinas, opciones: op3(t.esq), onChange: (v) => { st.esquinas = v; programar(); } })),
       seccion(t.colores, h('div', { class: 'qr__tres' }, colores(t.colPuntos, 'colPuntos', TINTAS), colores(t.colEsquinas, 'colEsquinas', TINTAS), colores(t.colFondo, 'colFondo', FONDOS))),
       seccion(t.fondo, subida('fondo', t.subirFondo, 1200, true), extrasFondo))));
 

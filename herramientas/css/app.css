@@ -65,13 +65,13 @@ a { color: inherit; }
 .aviso-js { padding: 2rem; }
 
 /* ================= sello ================= */
-.sello { text-align: center; padding: 14px 16px calc(14px + env(safe-area-inset-bottom)); font-size: 0.875rem; font-weight: 600; letter-spacing: 0.03em; color: var(--acero-600); text-shadow: 0 1px 0 rgba(255, 255, 255, 0.85); }
-.sello a { display: inline-block; padding: 8px 12px; text-decoration: none; border-radius: 8px; }
+.sello { text-align: center; padding: 8px 16px calc(8px + env(safe-area-inset-bottom)); font-size: 0.875rem; font-weight: 600; letter-spacing: 0.03em; color: var(--acero-600); text-shadow: 0 1px 0 rgba(255, 255, 255, 0.85); }
+.sello a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; text-decoration: none; border-radius: 8px; }
 .sello a:hover { color: var(--rojo-osc); text-decoration: underline; text-underline-offset: 3px; }
 
 /* ================= idioma ================= */
 .idioma { display: inline-flex; gap: 2px; padding: 3px; border-radius: 999px; background: rgba(26, 32, 38, 0.08); }
-.idioma__b { min-width: 44px; min-height: 38px; border: 0; border-radius: 999px; background: none; font-weight: 700; font-size: 0.9375rem; letter-spacing: 0.02em; color: var(--acero-600); }
+.idioma__b { min-width: 44px; min-height: 44px; border: 0; border-radius: 999px; background: none; font-weight: 700; font-size: 0.9375rem; letter-spacing: 0.02em; color: var(--acero-600); }
 .idioma__b[aria-pressed='true'] { background: var(--tinta); color: var(--blanco); }
 .mango .idioma { background: rgba(60, 0, 10, 0.28); }
 .mango .idioma__b { color: #FFE3E7; }
@@ -121,15 +121,15 @@ a { color: inherit; }
 .filo--tiempo { --a: var(--a4); }
 .filo--notas { --a: var(--a5); }
 .filo__acero { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.filo__cuerpo { fill: url(#acero); fill: #DDE2E7; stroke: #6F7A85; stroke-width: 1; vector-effect: non-scaling-stroke; transition: fill 140ms; }
-.filo__bisel { fill: none; stroke: #FFFFFF; stroke-width: 2.5; opacity: 0.75; stroke-linecap: round; }
+.filo__cuerpo { stroke: #6F7A85; stroke-width: 1; vector-effect: non-scaling-stroke; transition: fill 140ms; }
+.filo__bisel { fill: none; stroke: #FFFFFF; stroke-width: 2; opacity: 0.8; stroke-linecap: round; }
 .filo__marca { fill: none; stroke: #6F7A85; stroke-width: 1.4; }
 .filo__una { fill: #8A95A0; }
 .filo:hover .filo__cuerpo, .filo:focus-visible .filo__cuerpo { fill: #FFFFFF; }
 .filo:active .filo__cuerpo { fill: #C3CBD2; }
 .filo:focus-visible { outline-offset: 4px; }
 .filo__rotulo {
-  position: absolute; left: 27%; top: 50%; transform: translateY(-54%);
+  position: absolute; left: 27%; top: 50%; transform: translateY(-58%);
   display: flex; align-items: center; gap: calc(var(--u) * 10);
   font-weight: 700; font-size: max(0.9375rem, calc(var(--u) * 21)); line-height: 1; white-space: nowrap; letter-spacing: -0.005em;
 }

@@ -309,4 +309,4 @@ if ('serviceWorker' in navigator) {
 }
 
 // Asa mínima para pruebas automáticas (solo lectura).
-window.__ladea = { get state() { return { idx: G.idx, pos: G.pos.slice(), moves: G.moves, busy: G.busy, won: G.won, failed: G.failed }; }, perf: () => scene.perf() };
+window.__ladea = { get state() { return { idx: G.idx, pos: G.pos.slice(), moves: G.moves, busy: G.busy, won: G.won, failed: G.failed }; }, perf: () => scene.perf(), _scene: scene };

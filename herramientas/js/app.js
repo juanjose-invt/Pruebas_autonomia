@@ -3,6 +3,7 @@ import { h, icon, tr, getLang, setLang, onLang, store } from './core.js';
 const T = {
   es: {
     nombres: { conversor: 'Conversor', qr: 'Código QR', claves: 'Contraseñas', tiempo: 'Cronómetro', notas: 'Notas' },
+    titulos: { tiempo: 'Cronómetro y pomodoro' },
     intro: 'Conversor, códigos QR, contraseñas, cronómetro y notas. Todo funciona sin conexión y nada sale de este dispositivo.',
     elige: 'Despliega una hoja para empezar.',
     cerrar: 'Plegar y volver al inicio',
@@ -17,6 +18,7 @@ const T = {
   },
   en: {
     nombres: { conversor: 'Converter', qr: 'QR code', claves: 'Passwords', tiempo: 'Timer', notas: 'Notes' },
+    titulos: { tiempo: 'Stopwatch and pomodoro' },
     intro: 'Converter, QR codes, passwords, timer and notes. Everything works offline and nothing leaves this device.',
     elige: 'Unfold a blade to start.',
     cerrar: 'Fold and go back to start',
@@ -75,7 +77,8 @@ function selectorIdioma() {
 
 function svgHoja(hoja) {
   return `<svg class="filo__acero" viewBox="0 0 ${hoja.largo} 66" preserveAspectRatio="none" aria-hidden="true">
-    <path class="filo__cuerpo" d="${hoja.forma}"/><path class="filo__bisel" d="M40 ${hoja.id === 'notas' ? 40 : 43}H${hoja.largo - 110}"/>${hoja.extra()}</svg>`;
+    <defs><linearGradient id="acero-${hoja.id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F6F8F9"/><stop offset="0.55" stop-color="#D5DBE0"/><stop offset="1" stop-color="#B3BCC5"/></linearGradient></defs>
+    <path class="filo__cuerpo" fill="url(#acero-${hoja.id})" d="${hoja.forma}"/><path class="filo__bisel" d="M150 ${hoja.id === 'notas' ? 45 : 50}H${hoja.largo - 110}"/>${hoja.extra()}</svg>`;
 }
 
 /* ---------- inicio: la navaja en abanico ---------- */
@@ -145,7 +148,7 @@ async function abrir(id, animar = true) {
   const cuerpo = h('div', { class: 'hoja__cuerpo' }, h('p', { class: 'hoja__espera' }, t.cargando));
   const hoja = h('section', { class: `hoja hoja--${id}`, 'aria-labelledby': 'hoja-titulo' },
     h('header', { class: 'hoja__lomo' },
-      h('h1', { class: 'hoja__titulo', id: 'hoja-titulo' }, icon(id, 26), t.nombres[id]),
+      h('h1', { class: 'hoja__titulo', id: 'hoja-titulo' }, icon(id, 26), t.titulos[id] || t.nombres[id]),
       h('span', { class: 'hoja__una', 'aria-hidden': 'true' }),
       h('a', { class: 'hoja__plegar', href: '#', 'aria-label': t.cerrar, title: t.cerrar }, icon('x', 22))),
     cuerpo);

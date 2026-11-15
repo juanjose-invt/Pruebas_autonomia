@@ -10,7 +10,7 @@ const MAX_TILT = 0.2;      // ~11,5°
 const ACCEL = 34;          // casillas/s² con el tablero inclinado a tope
 const DRAG = 0.9;
 export const MARBLE_COLORS = ['#f2a20c', '#2358e0', '#d61f45'];
-const LIGHT_DIR = new THREE.Vector3(-0.62, 1, 0.42).normalize();
+const LIGHT_DIR = new THREE.Vector3(-0.85, 1, 0.5).normalize();
 
 // ---------- texturas hechas a mano con canvas ----------
 
@@ -255,7 +255,7 @@ export function createScene(canvas, hooks = {}) {
 
   // mesa y peana
   const tableT = tex(tableCanvas(), [5, 5]);
-  const table = new THREE.Mesh(new THREE.PlaneGeometry(90, 90), new THREE.MeshStandardMaterial({ map: tableT, roughness: 0.85, envMapIntensity: 0.25 }));
+  const table = new THREE.Mesh(new THREE.PlaneGeometry(90, 90), new THREE.MeshLambertMaterial({ map: tableT }));
   table.rotation.x = -Math.PI / 2; table.position.y = -1.7; table.receiveShadow = true;
   scene.add(table);
   const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 1.5, 0.8, 40), mWalnut);
@@ -268,7 +268,7 @@ export function createScene(canvas, hooks = {}) {
   let L = null, n = 0;
   let marbles = [];            // { mesh, glow, x, z, y, vis }
   const sphereGeo = new THREE.SphereGeometry(R, 36, 24);
-  const glowGeo = new THREE.CircleGeometry(0.34, 20).rotateX(-Math.PI / 2);
+  const glowGeo = new THREE.CircleGeometry(0.27, 20).rotateX(-Math.PI / 2);
 
   const cx = (c) => (c % n) - (n - 1) / 2;
   const cz = (c) => ((c / n) | 0) - (n - 1) / 2;
@@ -374,9 +374,9 @@ export function createScene(canvas, hooks = {}) {
 
   function syncMarble(m) {
     m.mesh.position.set(m.x, m.y, m.z);
-    m.glow.position.set(m.x - LIGHT_DIR.x * 0.5, 0.014, m.z - LIGHT_DIR.z * 0.5);
+    m.glow.position.set(m.x - LIGHT_DIR.x * 0.56, 0.014, m.z - LIGHT_DIR.z * 0.56);
     const up = Math.max(0, Math.min(1, (m.y - R * 0.2) / (R * 0.8)));
-    m.glow.material.opacity = 0.75 * up * (m.y > R * 1.5 ? Math.max(0, 1 - (m.y - R * 1.5) / 3) : 1);
+    m.glow.material.opacity = 0.9 * up * (m.y > R * 1.5 ? Math.max(0, 1 - (m.y - R * 1.5) / 3) : 1);
     m.glow.visible = m.glow.material.opacity > 0.01;
   }
   const SUNK = -R + 0.03;
@@ -416,10 +416,11 @@ export function createScene(canvas, hooks = {}) {
     glassU.uBack.value.set(-LIGHT_DIR.x, -LIGHT_DIR.y * 0.55, -LIGHT_DIR.z).normalize().transformDirection(camera.matrixWorldInverse);
     kick();
   }
+  let ratioCap = 2, slow = 0, slowN = 0;
   function resize() {
     W = canvas.clientWidth || window.innerWidth; H = canvas.clientHeight || window.innerHeight;
     const big = W * H > 1100 * 900;
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, big ? 1.5 : 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, big ? 1.5 : 2, ratioCap));
     renderer.setSize(W, H, false);
     fitCamera();
   }
@@ -434,7 +435,18 @@ export function createScene(canvas, hooks = {}) {
   function frame(t) {
     raf = 0;
     const dt = last ? Math.min(0.05, (t - last) / 1000) : 1 / 60;
-    if (last) { frameMs.push(t - last); if (frameMs.length > 240) frameMs.shift(); }
+    if (last) {
+      frameMs.push(t - last); if (frameMs.length > 240) frameMs.shift();
+      // si el aparato no llega a ~35 fps, se baja la resolución interna y luego las sombras
+      slow += t - last; slowN++;
+      if (slowN >= 45) {
+        if (slow / slowN > 28) {
+          if (renderer.getPixelRatio() > 1) { ratioCap = Math.max(1, renderer.getPixelRatio() - 0.25); resize(); }
+          else if (sun.shadow.mapSize.x > 1024) { sun.shadow.mapSize.set(1024, 1024); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; } }
+        }
+        slow = 0; slowN = 0;
+      }
+    }
     last = t; frames++;
     anims = anims.filter((fn) => !fn(dt));
     // muelle del tablero: pesado, con un pelín de rebote
@@ -662,6 +674,7 @@ export function createScene(canvas, hooks = {}) {
   return {
     setLevel, animateMove, moveMarblesTo, nudge, setPreview, setStage, resize, kick,
     woodURL: (kind) => (kind === 'dark' ? walnutCanvas : kind === 'mid' ? cherryCanvas : beechCanvas).toDataURL('image/jpeg', 0.8),
+    _dbg: { renderer, sun, table, scene, camera, THREE, mats: { mBeech, mFrame } },
     perf: () => ({ frames, avg: frameMs.length ? frameMs.reduce((a, b) => a + b, 0) / frameMs.length : 0, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }),
   };
 }
