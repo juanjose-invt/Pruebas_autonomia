@@ -1,4 +1,4 @@
-// Bocetos de los ocho proyectos, dibujados a mano en SVG (sin imágenes).
+// Bocetos de los nueve proyectos, dibujados a mano en SVG (sin imágenes).
 // Clases de trazo, definidas en sitio/cuaderno.css:
 //   .t      tinta, trazo principal        .fino   tinta, trazo fino
 //   .lapiz  grafito discontinuo           .rojo   lápiz rojo (cotas y flechas)
@@ -384,6 +384,46 @@ export function bocetoPizza() {
   return lienzo(cuerpo, 'Boceto: una pizza vista desde arriba y, a la derecha, tres pasos de la masa', 'Sketch: a pizza seen from above and, on the right, three stages of the dough');
 }
 
+/* ---------- Currículum: hoja con cabecera, secciones y marcas de imprenta ---------- */
+
+export function bocetoCurriculum() {
+  // Hojas apiladas detrás (plantillas)
+  const pila =
+    `<path class="t papelito" pathLength="1" d="M92,40 H252 V222 H92 Z" transform="rotate(5 172 130)"/>` +
+    `<path class="t papelito" pathLength="1" d="M92,40 H252 V222 H92 Z" transform="rotate(-4 172 130)"/>`;
+  // Hoja principal
+  const hoja = `<path class="t fondo" pathLength="1" d="M92,40 H252 V222 H92 Z"/>`;
+  // Cabecera: recuadro de foto y nombre
+  const cabecera =
+    `<rect class="t papelito" pathLength="1" x="104" y="52" width="34" height="40" rx="2"/>` +
+    `<circle class="fino" pathLength="1" cx="121" cy="68" r="7"/>` +
+    `<path class="fino" pathLength="1" d="M110,88 q11,-12 22,0"/>` +
+    `<path class="tinta-trazo" d="M148,60 h62"/>` +
+    `<path class="fino" pathLength="1" d="M148,72 h44 M148,82 h54 M148,92 h36"/>` +
+    `<path class="t" pathLength="1" d="M104,102 H240"/>`;
+  // Secciones con título y renglones
+  const seccion = (y, ancho) =>
+    `<path class="tinta-trazo" d="M104,${y} h${ancho}"/>` +
+    `<path class="fino" pathLength="1" d="M104,${y + 10} h126 M104,${y + 19} h112 M104,${y + 28} h120"/>`;
+  const cuerpo =
+    pila + hoja + cabecera + seccion(116, 30) + seccion(160, 38) +
+    // marcas de corte y de registro de imprenta
+    `<path class="rojo" d="M78,40 h-12 M92,26 v-12 M266,40 h12 M252,26 v-12 M78,222 h-12 M92,236 v12 M266,222 h12 M252,236 v12"/>` +
+    // cota: ancho de la hoja
+    `<path class="rojo" d="M92,254 H252 M98,250 l-6,4 l6,4 M246,250 l6,4 l-6,4"/>` +
+    // sello de tinta
+    `<circle class="rojo" cx="226" cy="196" r="16"/>` +
+    `<circle class="rrel" cx="226" cy="196" r="12"/>` +
+    `<path class="rojo" d="M219,196 l5,5 l9,-10"/>` +
+    // lápiz y pestañas laterales (idiomas / sectores)
+    `<path class="t papelito" pathLength="1" d="M252,70 h14 v22 h-14 M252,100 h14 v22 h-14 M252,130 h14 v22 h-14"/>` +
+    `<path class="lapiz" d="M300,70 C284,84 276,96 272,110"/>` +
+    rot(304, 66, 'plantillas', 'templates', 'start') +
+    rot(8, 130, 'hoja A4', 'A4 sheet', 'start', 'rot rot-rojo') +
+    rot(172, 12, 'currículum', 'résumé', 'middle');
+  return lienzo(cuerpo, 'Boceto: una hoja de currículum con foto, nombre y secciones, hojas apiladas detrás, marcas de corte de imprenta y un sello', 'Sketch: a résumé sheet with photo, name and sections, sheets stacked behind, printer crop marks and a stamp');
+}
+
 export const bocetos = {
   gastos: bocetoGastos,
   kanban: bocetoKanban,
@@ -393,4 +433,5 @@ export const bocetos = {
   panel: bocetoPanel,
   escaner: bocetoEscaner,
   pizza: bocetoPizza,
+  curriculum: bocetoCurriculum,
 };

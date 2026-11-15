@@ -19,8 +19,8 @@ const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
 const iSalida = args.indexOf('--salida');
 const SALIDA = path.resolve(RAIZ, iSalida >= 0 && args[iSalida + 1] ? args[iSalida + 1] : '_site');
-// Las cuatro primeras forman la primera tanda; las otras cuatro, la segunda. Si una carpeta no existe, se omite sin fallar.
-const APPS = ['gastos', 'kanban', 'juego', 'herramientas', 'presupuestos', 'panel', 'escaner', 'pizza'];
+// Cuatro apps por tanda (la novena es la tercera). Si una carpeta no existe, se omite sin fallar.
+const APPS = ['gastos', 'kanban', 'juego', 'herramientas', 'presupuestos', 'panel', 'escaner', 'pizza', 'curriculum'];
 const ARCHIVO_PERFIL = 'contenido/perfil.md';
 
 /* ---------- Textos fijos del sitio ---------- */
@@ -86,8 +86,14 @@ const PROYECTOS = [
     es: { nombre: 'Pizza', texto: 'Guía de masas de pizza con calculadora, recetas configurables y paso a paso en 3D. Estética de pizzería napolitana.', abrir: 'Abrir Pizza' },
     en: { nombre: 'Pizza', texto: 'A pizza dough guide with a calculator, configurable recipes and a 3D step-by-step. Neapolitan pizzeria look.', abrir: 'Open Pizza' },
   },
+  {
+    id: 'curriculum',
+    es: { nombre: 'Currículum', texto: 'Creador de currículums para buscar trabajo en España o en el extranjero: plantillas genéricas, europeas y por sectores, una guía interactiva inicial y exportación a PDF. Estética de papelería de imprenta.', abrir: 'Abrir Currículum' },
+    en: { nombre: 'Résumé', texto: 'A résumé builder for job hunting in Spain or abroad: generic, European and sector-specific templates, an interactive starting guide and PDF export. Printer\'s stationery look.', abrir: 'Open Résumé' },
+  },
 ];
 const PRIMERA_TANDA = 4; // cuántos proyectos van en el primer grupo de la página Proyectos
+const SEGUNDA_TANDA = 8; // índice donde empieza el tercer grupo
 
 /* ---------- Utilidades ---------- */
 
@@ -299,8 +305,8 @@ function paginaInicio(perfil, entradas) {
 <div class="portada-texto">
 <h1>${bi('Cuaderno de campo', 'Field notebook')}</h1>
 <p class="entradilla">${bi(
-      'Aquí se guardan ocho proyectos hechos con código, un blog y unas páginas que todavía están por escribir.',
-      'This notebook holds eight projects made with code, a blog and a few pages that are still to be written.',
+      'Aquí se guardan nueve proyectos hechos con código, un blog y unas páginas que todavía están por escribir.',
+      'This notebook holds nine projects made with code, a blog and a few pages that are still to be written.',
     )}</p>
 <dl class="ficha">
 <dt>${bi('Este cuaderno es de', 'This notebook belongs to')}</dt><dd>${lineaCampo(perfil.nombre)}</dd>
@@ -332,14 +338,15 @@ ${p.es.otro ? `<p class="otro-enlace">${bi(p.es.otro, p.en.otro)}</p>` : ''}
 
 function paginaProyectos() {
   const primera = PROYECTOS.slice(0, PRIMERA_TANDA).map((p, i) => laminaProyecto(p, i)).join('\n');
-  const segunda = PROYECTOS.slice(PRIMERA_TANDA).map((p, i) => laminaProyecto(p, i + PRIMERA_TANDA)).join('\n');
+  const segunda = PROYECTOS.slice(PRIMERA_TANDA, SEGUNDA_TANDA).map((p, i) => laminaProyecto(p, i + PRIMERA_TANDA)).join('\n');
+  const tercera = PROYECTOS.slice(SEGUNDA_TANDA).map((p, i) => laminaProyecto(p, i + SEGUNDA_TANDA)).join('\n');
 
   return pagina({
     archivo: 'proyectos.html',
     seccion: 'proyectos',
     tituloEs: 'Proyectos',
     tituloEn: 'Projects',
-    descripcion: 'Ocho aplicaciones web: gastos, kanban, juego de canicas, caja de herramientas, presupuestos, panel de datos, escáner y masas de pizza.',
+    descripcion: 'Nueve aplicaciones web: gastos, kanban, juego de canicas, caja de herramientas, presupuestos, panel de datos, escáner, masas de pizza y currículums.',
     numero: 2,
     cuerpo: `<div class="columna">
 <h1>${bi('Proyectos', 'Projects')}</h1>
@@ -349,8 +356,8 @@ function paginaProyectos() {
       'p',
     )}</aside>
 <p class="entradilla">${bi(
-      'Ocho aplicaciones web que viven en este mismo repositorio. Funcionan en el navegador, sin servidor, y están pensadas para usarse con el dedo en una tablet.',
-      'Eight web apps that live in this same repository. They run in the browser, with no server, and are meant to be used by touch on a tablet.',
+      'Nueve aplicaciones web que viven en este mismo repositorio. Funcionan en el navegador, sin servidor, y están pensadas para usarse con el dedo en una tablet.',
+      'Nine web apps that live in this same repository. They run in the browser, with no server, and are meant to be used by touch on a tablet.',
     )}</p>
 </div>
 <div class="laminas">
@@ -362,7 +369,14 @@ ${primera}
 <div class="laminas segunda">
 ${segunda}
 </div>
-</section>`,
+</section>
+${tercera ? `<section class="tanda" aria-labelledby="tercera-tanda">
+<h2 id="tercera-tanda">${bi('Tercera tanda', 'Third batch')}</h2>
+<p>${bi('Una aplicación más, con el mismo método: web estática, sin servidor y con los datos en el propio dispositivo.', 'One more app, built the same way: static web, no server, and data kept on the device itself.')}</p>
+<div class="laminas">
+${tercera}
+</div>
+</section>` : ''}`,
   });
 }
 
