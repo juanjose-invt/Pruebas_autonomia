@@ -19,7 +19,8 @@ const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
 const iSalida = args.indexOf('--salida');
 const SALIDA = path.resolve(RAIZ, iSalida >= 0 && args[iSalida + 1] ? args[iSalida + 1] : '_site');
-const APPS = ['gastos', 'kanban', 'juego', 'herramientas'];
+// Las cuatro primeras forman la primera tanda; las otras cuatro, la segunda. Si una carpeta no existe, se omite sin fallar.
+const APPS = ['gastos', 'kanban', 'juego', 'herramientas', 'presupuestos', 'panel', 'escaner', 'pizza'];
 const ARCHIVO_PERFIL = 'contenido/perfil.md';
 
 /* ---------- Textos fijos del sitio ---------- */
@@ -55,7 +56,38 @@ const PROYECTOS = [
     es: { nombre: 'Herramientas', texto: 'Caja de herramientas tipo navaja: conversor, QR con logo o foto, contraseñas, cronómetro y pomodoro, y notas en Markdown.', abrir: 'Abrir Herramientas' },
     en: { nombre: 'Tools', texto: 'A pocket-knife toolbox: converter, QR codes with a logo or photo, passwords, stopwatch and pomodoro, and Markdown notes.', abrir: 'Open Tools' },
   },
+  {
+    id: 'presupuestos',
+    es: {
+      nombre: 'Presupuestos',
+      texto: 'Generador gratuito de presupuestos en PDF.',
+      otro: 'Es la puerta de entrada a <a href="https://ofiza.es" rel="noopener">Ofiza</a>, un SaaS para autónomos.',
+      abrir: 'Abrir Presupuestos',
+    },
+    en: {
+      nombre: 'Quotes',
+      texto: 'A free generator of quotes as PDF files.',
+      otro: 'It is the way in to <a href="https://ofiza.es" rel="noopener">Ofiza</a>, a SaaS for the self-employed.',
+      abrir: 'Open Quotes',
+    },
+  },
+  {
+    id: 'panel',
+    es: { nombre: 'Panel', texto: 'Panel de datos instantáneo a partir de un CSV o un Excel. Los datos no salen del dispositivo. Estética de risografía.', abrir: 'Abrir Panel' },
+    en: { nombre: 'Dashboard', texto: 'An instant data dashboard from a CSV or an Excel file. The data never leaves the device. Risograph look.', abrir: 'Open Dashboard' },
+  },
+  {
+    id: 'escaner',
+    es: { nombre: 'Escáner', texto: 'Escáner de tickets y documentos con reconocimiento de texto en el propio dispositivo. Estética de mesa de escáner.', abrir: 'Abrir Escáner' },
+    en: { nombre: 'Scanner', texto: 'A scanner for receipts and documents, with text recognition on the device itself. Scanner-bed look.', abrir: 'Open Scanner' },
+  },
+  {
+    id: 'pizza',
+    es: { nombre: 'Pizza', texto: 'Guía de masas de pizza con calculadora, recetas configurables y paso a paso en 3D. Estética de pizzería napolitana.', abrir: 'Abrir Pizza' },
+    en: { nombre: 'Pizza', texto: 'A pizza dough guide with a calculator, configurable recipes and a 3D step-by-step. Neapolitan pizzeria look.', abrir: 'Open Pizza' },
+  },
 ];
+const PRIMERA_TANDA = 4; // cuántos proyectos van en el primer grupo de la página Proyectos
 
 /* ---------- Utilidades ---------- */
 
@@ -267,8 +299,8 @@ function paginaInicio(perfil, entradas) {
 <div class="portada-texto">
 <h1>${bi('Cuaderno de campo', 'Field notebook')}</h1>
 <p class="entradilla">${bi(
-      'Aquí se guardan cuatro proyectos hechos con código, un blog y unas páginas que todavía están por escribir.',
-      'This notebook holds four projects made with code, a blog and a few pages that are still to be written.',
+      'Aquí se guardan ocho proyectos hechos con código, un blog y unas páginas que todavía están por escribir.',
+      'This notebook holds eight projects made with code, a blog and a few pages that are still to be written.',
     )}</p>
 <dl class="ficha">
 <dt>${bi('Este cuaderno es de', 'This notebook belongs to')}</dt><dd>${lineaCampo(perfil.nombre)}</dd>
@@ -285,23 +317,29 @@ ${ultimas ? `<h2>${bi('Últimas anotaciones', 'Latest entries')}</h2><ul class="
   });
 }
 
-function paginaProyectos() {
-  const laminas = PROYECTOS.map((p, i) => `<article class="lamina" id="${p.id}">
+function laminaProyecto(p, i) {
+  return `<article class="lamina" id="${p.id}">
 <figure><div class="plancha">${bocetos[p.id]()}</div></figure>
 <div class="lamina-texto">
 <p class="pie-figura">fig. ${i + 1}</p>
 <h2>${bi(p.es.nombre, p.en.nombre)}</h2>
 <p>${bi(p.es.texto, p.en.texto)}</p>
+${p.es.otro ? `<p class="otro-enlace">${bi(p.es.otro, p.en.otro)}</p>` : ''}
 <a class="abrir" href="${p.id}/">${bi(p.es.abrir, p.en.abrir)}${FLECHA}</a>
 </div>
-</article>`).join('\n');
+</article>`;
+}
+
+function paginaProyectos() {
+  const primera = PROYECTOS.slice(0, PRIMERA_TANDA).map((p, i) => laminaProyecto(p, i)).join('\n');
+  const segunda = PROYECTOS.slice(PRIMERA_TANDA).map((p, i) => laminaProyecto(p, i + PRIMERA_TANDA)).join('\n');
 
   return pagina({
     archivo: 'proyectos.html',
     seccion: 'proyectos',
     tituloEs: 'Proyectos',
     tituloEn: 'Projects',
-    descripcion: 'Cuatro aplicaciones web: gastos, kanban, juego de canicas y caja de herramientas.',
+    descripcion: 'Ocho aplicaciones web: gastos, kanban, juego de canicas, caja de herramientas, presupuestos, panel de datos, escáner y masas de pizza.',
     numero: 2,
     cuerpo: `<div class="columna">
 <h1>${bi('Proyectos', 'Projects')}</h1>
@@ -311,13 +349,20 @@ function paginaProyectos() {
       'p',
     )}</aside>
 <p class="entradilla">${bi(
-      'Cuatro aplicaciones web que viven en este mismo repositorio. Funcionan en el navegador, sin servidor, y están pensadas para usarse con el dedo en una tablet.',
-      'Four web apps that live in this same repository. They run in the browser, with no server, and are meant to be used by touch on a tablet.',
+      'Ocho aplicaciones web que viven en este mismo repositorio. Funcionan en el navegador, sin servidor, y están pensadas para usarse con el dedo en una tablet.',
+      'Eight web apps that live in this same repository. They run in the browser, with no server, and are meant to be used by touch on a tablet.',
     )}</p>
 </div>
 <div class="laminas">
-${laminas}
-</div>`,
+${primera}
+</div>
+<section class="tanda" aria-labelledby="segunda-tanda">
+<h2 id="segunda-tanda">${bi('Segunda tanda', 'Second batch')}</h2>
+<p>${bi('Cuatro aplicaciones más, con el mismo método: web estática, sin servidor y con los datos en el propio dispositivo.', 'Four more apps, built the same way: static web, no server, and data kept on the device itself.')}</p>
+<div class="laminas segunda">
+${segunda}
+</div>
+</section>`,
   });
 }
 

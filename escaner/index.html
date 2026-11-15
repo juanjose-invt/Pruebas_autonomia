@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Escáner de tickets</title>
+<meta name="description" content="Escanea tickets y facturas con la cámara o desde una imagen o PDF. Reconoce el texto en el propio dispositivo, sin conexión, y extrae fecha, total, impuestos y proveedor.">
+<meta name="theme-color" content="#18211f">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="preload" href="fonts/ibm-plex-mono-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/ibm-plex-mono-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 13h6M9 17h6"/></symbol>
+    <symbol id="i-crop" viewBox="0 0 24 24"><path d="M7 3v14h14M3 7h14v14"/></symbol>
+    <symbol id="i-rotate" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v5h-5"/></symbol>
+    <symbol id="i-level" viewBox="0 0 24 24"><path d="M3 15l18-6"/><path d="M3 19h18"/><circle cx="12" cy="12" r="1.6"/></symbol>
+    <symbol id="i-contrast" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4v16a8 8 0 0 0 0-16z" fill="currentColor"/></symbol>
+    <symbol id="i-scan" viewBox="0 0 24 24"><path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4"/><path d="M3 12h18"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-history" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-point" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><circle cx="12" cy="12" r="4"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><path d="M8 8h11v13H8z"/><path d="M5 16V3h11"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M4 12h13M12 6l6 6-6 6"/><path d="M20 4v16"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></symbol>
+    <symbol id="i-left" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+  </defs>
+</svg>
+
+<div class="scanner" id="scanner">
+  <header class="lid">
+    <h1 class="brand"><span class="brand-lamp" aria-hidden="true"></span><span data-i18n="app.title">Escáner</span></h1>
+    <div class="lid-actions">
+      <button type="button" class="case-btn" id="historyBtn" aria-haspopup="dialog" aria-controls="history">
+        <svg class="ico" aria-hidden="true"><use href="#i-history"/></svg><span data-i18n="history.open">Historial</span>
+      </button>
+      <div class="lang" role="group" data-i18n-aria="lang.label">
+        <button type="button" data-lang="es" aria-pressed="true">ES</button>
+        <button type="button" data-lang="en" aria-pressed="false">EN</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="deck">
+    <section class="bed" aria-labelledby="bedTitle">
+      <h2 class="sr" id="bedTitle" data-i18n="app.title">Escáner</h2>
+      <div class="glass" id="glass">
+        <div class="empty" id="empty">
+          <p class="empty-title" data-i18n="bed.empty.title"></p>
+          <p class="empty-body" data-i18n="bed.empty.body"></p>
+          <div class="empty-actions">
+            <button type="button" class="lamp-btn" id="camBtn"><svg class="ico" aria-hidden="true"><use href="#i-camera"/></svg><span data-i18n="bed.camera"></span></button>
+            <button type="button" class="case-btn big" id="fileBtn"><svg class="ico" aria-hidden="true"><use href="#i-file"/></svg><span data-i18n="bed.file"></span></button>
+          </div>
+        </div>
+
+        <div class="cam" id="cam" hidden>
+          <video id="camVideo" playsinline muted></video>
+          <div class="cam-actions">
+            <button type="button" class="case-btn" id="camCancel" data-i18n="cam.cancel"></button>
+            <button type="button" class="shutter" id="camShoot"><span class="sr" data-i18n="cam.shoot"></span></button>
+          </div>
+        </div>
+
+        <div class="doc" id="doc" hidden>
+          <canvas id="docCanvas"></canvas>
+          <div class="marks" id="marks"></div>
+          <div class="shade" id="shade" hidden></div>
+          <div class="crop" id="crop" hidden>
+            <div class="crop-rect" id="cropRect">
+              <span class="h" data-h="nw"></span><span class="h" data-h="ne"></span>
+              <span class="h" data-h="sw"></span><span class="h" data-h="se"></span>
+            </div>
+          </div>
+        </div>
+        <div class="lamp" id="lamp" hidden aria-hidden="true"><span class="lamp-core"></span></div>
+        <p class="drop-hint" id="dropHint" hidden data-i18n="bed.drop"></p>
+      </div>
+
+      <div class="readout" id="readout" aria-live="polite">
+        <span class="readout-text" id="readoutText"></span>
+        <span class="meter" id="meter" hidden><span class="meter-fill" id="meterFill"></span></span>
+      </div>
+
+      <div class="tools" id="tools" hidden>
+        <button type="button" class="tool" id="tNew"><svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg><span data-i18n="tool.new"></span></button>
+        <button type="button" class="tool" id="tCrop" aria-pressed="false" aria-controls="pCrop"><svg class="ico" aria-hidden="true"><use href="#i-crop"/></svg><span data-i18n="tool.crop"></span></button>
+        <button type="button" class="tool" id="tRotate"><svg class="ico" aria-hidden="true"><use href="#i-rotate"/></svg><span data-i18n="tool.rotate"></span></button>
+        <button type="button" class="tool" id="tStraight" aria-pressed="false" aria-controls="pStraight"><svg class="ico" aria-hidden="true"><use href="#i-level"/></svg><span data-i18n="tool.straighten"></span></button>
+        <button type="button" class="tool" id="tContrast" aria-pressed="false" aria-controls="pContrast"><svg class="ico" aria-hidden="true"><use href="#i-contrast"/></svg><span data-i18n="tool.contrast"></span></button>
+        <button type="button" class="lamp-btn tool-scan" id="tScan"><svg class="ico" aria-hidden="true"><use href="#i-scan"/></svg><span id="tScanLabel" data-i18n="tool.scan"></span></button>
+      </div>
+
+      <div class="toolpanel" id="pCrop" hidden>
+        <p class="panel-hint" data-i18n="crop.hint"></p>
+        <div class="panel-row">
+          <button type="button" class="case-btn" id="cropAuto" data-i18n="crop.auto"></button>
+          <button type="button" class="case-btn" id="cropAll" data-i18n="crop.all"></button>
+          <span class="spacer"></span>
+          <button type="button" class="case-btn" id="cropCancel" data-i18n="crop.cancel"></button>
+          <button type="button" class="lamp-btn" id="cropApply" data-i18n="crop.apply"></button>
+        </div>
+      </div>
+      <div class="toolpanel" id="pStraight" hidden>
+        <div class="panel-row">
+          <label class="slider"><span data-i18n="straight.angle"></span>
+            <input type="range" id="angle" min="-20" max="20" step="0.1" value="0">
+            <output id="angleOut">0°</output>
+          </label>
+          <button type="button" class="case-btn" id="angleAuto" data-i18n="straight.auto"></button>
+          <button type="button" class="case-btn" id="angleZero" data-i18n="straight.reset"></button>
+        </div>
+      </div>
+      <div class="toolpanel" id="pContrast" hidden>
+        <div class="panel-row">
+          <label class="slider"><span data-i18n="contrast.amount"></span>
+            <input type="range" id="boost" min="0" max="100" step="5" value="60">
+            <output id="boostOut">60</output>
+          </label>
+          <label class="check"><input type="checkbox" id="bw"><span data-i18n="contrast.bw"></span></label>
+          <button type="button" class="case-btn" id="boostOff" data-i18n="contrast.off"></button>
+        </div>
+      </div>
+      <div class="toolpanel" id="pPdf" hidden>
+        <div class="panel-row center">
+          <button type="button" class="case-btn icon-only" id="pdfPrev" data-i18n-aria="pdf.prev"><svg class="ico" aria-hidden="true"><use href="#i-left"/></svg></button>
+          <span id="pdfLabel"></span>
+          <button type="button" class="case-btn icon-only" id="pdfNext" data-i18n-aria="pdf.next"><svg class="ico" aria-hidden="true"><use href="#i-right"/></svg></button>
+        </div>
+      </div>
+    </section>
+
+    <aside class="strip" aria-label="Ticket" id="strip">
+      <div class="paper-wrap">
+        <article class="ticket" id="ticket"></article>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<div class="assign" id="assign" hidden>
+  <p class="assign-title" id="assignTitle"></p>
+  <div class="assign-opts" id="assignOpts"></div>
+</div>
+
+<div class="pointing" id="pointing" hidden role="status">
+  <span id="pointingText"></span>
+  <button type="button" class="case-btn" id="pointingCancel" data-i18n="field.pointCancel"></button>
+</div>
+
+<div class="drawer-back" id="historyBack" hidden></div>
+<section class="drawer" id="history" hidden role="dialog" aria-modal="true" aria-labelledby="historyTitle">
+  <header class="drawer-head">
+    <h2 id="historyTitle" data-i18n="history.title"></h2>
+    <button type="button" class="case-btn icon-only" id="historyClose" data-i18n-aria="history.close"><svg class="ico" aria-hidden="true"><use href="#i-close"/></svg></button>
+  </header>
+  <label class="search">
+    <svg class="ico" aria-hidden="true"><use href="#i-search"/></svg>
+    <span class="sr" data-i18n="history.search"></span>
+    <input type="search" id="historySearch" data-i18n-ph="history.search" autocomplete="off">
+  </label>
+  <div class="drawer-bar">
+    <span id="historyCount"></span>
+    <span class="spacer"></span>
+    <button type="button" class="case-btn" id="exportCsv"><svg class="ico" aria-hidden="true"><use href="#i-download"/></svg><span data-i18n="history.csv"></span></button>
+    <button type="button" class="case-btn" id="exportJson"><svg class="ico" aria-hidden="true"><use href="#i-download"/></svg><span data-i18n="history.json"></span></button>
+  </div>
+  <ul class="stubs" id="stubs"></ul>
+  <p class="drawer-empty" id="historyEmpty" hidden></p>
+</section>
+
+<dialog class="hu" id="huDialog" aria-labelledby="huTitle">
+  <form method="dialog" class="hu-paper" id="huForm" novalidate>
+    <h2 id="huTitle" data-i18n="hu.title"></h2>
+    <p class="hu-body" data-i18n="hu.body"></p>
+    <p class="hu-warn" id="huDup" hidden data-i18n="hu.dup"></p>
+    <div class="hu-grid">
+      <label><span data-i18n="hu.amount"></span><input id="huAmount" inputmode="decimal" autocomplete="off"></label>
+      <label><span data-i18n="hu.date"></span><input id="huDate" type="date"></label>
+      <label><span data-i18n="hu.cat"></span><select id="huCat"></select></label>
+      <label class="wide"><span data-i18n="hu.note"></span><input id="huNote" maxlength="120" autocomplete="off"></label>
+    </div>
+    <p class="hu-small" id="huCurrency"></p>
+    <div class="hu-doubt" id="huDoubt" hidden>
+      <p data-i18n="hu.doubt"></p>
+      <label class="check paper"><input type="checkbox" id="huConfirm"><span data-i18n="hu.confirm"></span></label>
+    </div>
+    <p class="hu-small" data-i18n="hu.open"></p>
+    <p class="hu-err" id="huErr" role="alert" hidden></p>
+    <div class="hu-actions">
+      <button type="button" class="paper-btn" id="huCsv"><svg class="ico" aria-hidden="true"><use href="#i-download"/></svg><span data-i18n="hu.csv"></span></button>
+      <span class="spacer"></span>
+      <button type="button" class="paper-btn" id="huCancel" data-i18n="hu.cancel"></button>
+      <button type="button" class="paper-btn ink" id="huSend" data-i18n="hu.send"></button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden>
+  <span id="toastMsg"></span>
+  <a class="toast-act" id="toastLink" hidden></a>
+  <button type="button" class="toast-act" id="toastAct" hidden></button>
+</div>
+
+<input type="file" id="fileInput" accept="image/*,application/pdf" hidden>
+<input type="file" id="camInput" accept="image/*" capture="environment" hidden>
+<noscript><p style="padding:24px;font-family:monospace">El escáner necesita JavaScript. / The scanner needs JavaScript.</p></noscript>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
