@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vitraluz — rompe el cristal, deja pasar la luz</title>
+<meta name="description" content="Vitraluz: un rompebloques de vidrieras. Cien salas de cristal de colores, bolas de luz y mejoras que caen del cielo.">
+<meta name="theme-color" content="#17113a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preload" href="fonts/fredoka-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ============ INICIO ============ -->
+<main class="pantalla" id="inicio">
+  <div class="barra-ajustes">
+    <div class="idioma" role="group" id="grupoIdioma" aria-label="Idioma">
+      <button type="button" data-lang="es" aria-pressed="true">ES</button>
+      <button type="button" data-lang="en" aria-pressed="false">EN</button>
+    </div>
+    <div class="interruptores" data-interruptores></div>
+  </div>
+
+  <div class="portada">
+    <div class="vidriera"><canvas id="portada" width="10" height="10" aria-hidden="true"></canvas></div>
+    <div class="portada-texto">
+      <h1 class="marca">Vitraluz</h1>
+      <p class="lema" data-t="lema"></p>
+      <button type="button" class="boton principal grande" id="btnJugar"></button>
+      <p class="jugadas-hoy" id="jugadasHoy" aria-live="polite"></p>
+      <p class="racha" id="rachaInicio"></p>
+      <nav class="menu" aria-label="Menú">
+        <button type="button" class="boton" id="btnMapa" data-t="mapa"></button>
+        <button type="button" class="boton" id="btnHoy" data-t="hoy"></button>
+        <button type="button" class="boton" id="btnLogros" data-t="logros"></button>
+        <button type="button" class="boton" id="btnAyuda" data-t="ayuda"></button>
+        <button type="button" class="boton" id="btnCausa" data-t="causa"></button>
+      </nav>
+    </div>
+  </div>
+
+  <footer class="pie">
+    <div class="espacio-anuncio" data-formato="banda"></div>
+    <p class="sello"><a href="../">by innovativecode</a></p>
+  </footer>
+</main>
+
+<!-- ============ MAPA ============ -->
+<main class="pantalla" id="mapa" hidden>
+  <header class="cabecera">
+    <button type="button" class="boton icono" id="btnMapaVolver" data-aria="volver"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5l-7 7 7 7"/></svg></button>
+    <h2 data-t="mapaTitulo"></h2>
+    <p class="estrellas-total" id="mapaEstrellas"></p>
+  </header>
+  <div class="salas" id="salas"></div>
+  <footer class="pie">
+    <div class="espacio-anuncio" data-formato="banda"></div>
+    <p class="sello"><a href="../">by innovativecode</a></p>
+  </footer>
+</main>
+
+<!-- ============ JUEGO ============ -->
+<main class="pantalla" id="juego" hidden>
+  <div class="hud" id="hud">
+    <button type="button" class="boton icono" id="btnPausa" data-aria="pausa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 5.5v13M15.5 5.5v13"/></svg></button>
+    <p class="dato dato-nivel"><span class="rot" data-t="nivel"></span><b id="hudNivel">1</b></p>
+    <p class="dato dato-puntos"><span class="rot" data-t="puntos"></span><b id="hudPuntos">0</b></p>
+    <p class="dato dato-vidas"><span class="rot" data-t="vidas"></span><span class="vidas" id="hudVidas" role="img"></span></p>
+    <p class="combo" id="hudCombo" aria-hidden="true"></p>
+  </div>
+  <div class="escena" id="escena">
+    <canvas id="lienzo" width="720" height="1000" tabindex="0"></canvas>
+    <p class="aviso-lanzar" id="avisoLanzar" hidden></p>
+    <p class="aviso-mejora" id="avisoMejora" hidden></p>
+  </div>
+  <ul class="efectos" id="efectos" aria-live="off"></ul>
+</main>
+
+<!-- ============ DIÁLOGOS ============ -->
+<dialog class="hoja" id="dlgPausa" aria-labelledby="pausaT">
+  <h2 id="pausaT" data-t="pausaTitulo"></h2>
+  <div class="acciones columna">
+    <button type="button" class="boton principal" id="btnContinuar" data-t="continuar"></button>
+    <button type="button" class="boton" id="btnReiniciar" data-t="reiniciar"></button>
+    <button type="button" class="boton" id="btnSalir" data-t="salir"></button>
+  </div>
+  <div class="interruptores" data-interruptores></div>
+  <p class="nota" data-t="pausaNota"></p>
+  <p class="nota" id="pausaDescanso" hidden></p>
+</dialog>
+
+<dialog class="hoja" id="dlgVictoria" aria-labelledby="vicT">
+  <div class="estrellas" id="vicEstrellas" role="img"></div>
+  <h2 id="vicT"></h2>
+  <p class="elogio" id="vicElogio"></p>
+  <p class="cifra"><b id="vicPuntos">0</b> <span data-t="puntos"></span></p>
+  <p class="nota" id="vicDesglose"></p>
+  <ul class="datos" id="vicDatos"></ul>
+  <div class="acciones columna">
+    <button type="button" class="boton principal" id="btnSiguiente"></button>
+    <div class="acciones">
+      <button type="button" class="boton" id="btnRepetir" data-t="repetir"></button>
+      <button type="button" class="boton" id="btnVicInicio" data-t="inicio"></button>
+    </div>
+  </div>
+  <div class="espacio-anuncio" data-formato="banda"></div>
+</dialog>
+
+<dialog class="hoja" id="dlgDerrota" aria-labelledby="derT">
+  <h2 id="derT" data-t="derrotaTitulo"></h2>
+  <p class="elogio" id="derDato"></p>
+  <p id="derAnimo"></p>
+  <p class="nota" id="derAyuda" hidden></p>
+  <div class="acciones columna">
+    <button type="button" class="boton principal" id="btnReintentar" data-t="reintentar"></button>
+    <button type="button" class="boton" id="btnDerInicio" data-t="inicio"></button>
+  </div>
+  <p class="nota" data-t="reintentarNota"></p>
+  <div class="espacio-anuncio" data-formato="banda"></div>
+</dialog>
+
+<dialog class="hoja" id="dlgOferta" aria-labelledby="ofT">
+  <h2 id="ofT" data-t="ofertaTitulo"></h2>
+  <p id="ofTexto"></p>
+  <p class="nota" id="ofNota"></p>
+  <p class="nota aviso" id="ofAviso" role="status" hidden></p>
+  <div class="acciones columna pareja">
+    <button type="button" class="boton" id="btnOfertaSi" data-t="ofertaSi"></button>
+    <button type="button" class="boton" id="btnOfertaNo" data-t="ofertaNo"></button>
+  </div>
+</dialog>
+
+<dialog class="hoja" id="dlgTope" aria-labelledby="topeT">
+  <h2 id="topeT" data-t="topeTitulo"></h2>
+  <p id="topeTexto"></p>
+  <ul class="datos" id="topeDatos"></ul>
+  <p class="elogio" id="topeManana"></p>
+  <div class="acciones">
+    <button type="button" class="boton principal" id="btnTopeCerrar" data-t="cerrar"></button>
+    <button type="button" class="boton" id="btnTopeMapa" data-t="verMapa"></button>
+  </div>
+  <div class="espacio-anuncio" data-formato="banda"></div>
+</dialog>
+
+<dialog class="hoja anuncio" id="anuncio" aria-labelledby="adT">
+  <div class="anuncio-caja">
+    <h2 id="adT" data-t="adTitulo"></h2>
+    <p class="nota" data-t="adNota"></p>
+  </div>
+  <div class="anuncio-progreso" aria-hidden="true"><i id="anuncioBarra"></i></div>
+  <p id="anuncioCuenta" role="status"></p>
+  <div class="acciones">
+    <button type="button" class="boton" id="anuncioCerrar" data-t="adCerrar"></button>
+    <button type="button" class="boton principal" id="anuncioSeguir" data-t="adSeguir" hidden></button>
+  </div>
+</dialog>
+
+<dialog class="hoja" id="dlgNivel" aria-labelledby="nivT">
+  <h2 id="nivT"></h2>
+  <p class="nota" id="nivSala"></p>
+  <div class="estrellas chicas" id="nivEstrellas" role="img"></div>
+  <ul class="datos" id="nivDatos"></ul>
+  <p class="nota" id="nivCoste"></p>
+  <div class="acciones">
+    <button type="button" class="boton principal" id="btnNivJugar" data-t="jugar"></button>
+    <button type="button" class="boton" data-cerrar data-t="cerrar"></button>
+  </div>
+</dialog>
+
+<dialog class="hoja" id="dlgHoy" aria-labelledby="hoyT">
+  <h2 id="hoyT" data-t="hoyTitulo"></h2>
+  <p id="hoyNada" hidden></p>
+  <ul class="datos" id="hoyDatos"></ul>
+  <p class="nota" id="hoyRacha"></p>
+  <p class="nota" id="hoyTotal"></p>
+  <div class="acciones"><button type="button" class="boton principal" data-cerrar data-t="cerrar"></button></div>
+</dialog>
+
+<dialog class="hoja ancha" id="dlgLogros" aria-labelledby="logT">
+  <h2 id="logT"><span data-t="logrosTitulo"></span> <span class="cuenta" id="logCuenta"></span></h2>
+  <ul class="logros" id="logLista"></ul>
+  <div class="acciones"><button type="button" class="boton principal" data-cerrar data-t="cerrar"></button></div>
+</dialog>
+
+<dialog class="hoja ancha" id="dlgAyuda" aria-labelledby="ayT">
+  <h2 id="ayT" data-t="ayudaTitulo"></h2>
+  <p data-t="ayuda1"></p>
+  <p data-t="ayuda2"></p>
+  <p data-t="ayuda3"></p>
+  <p class="nota" data-t="ayuda4"></p>
+  <h3 data-t="ayudaMejoras"></h3>
+  <ul class="leyenda" id="ayBuenas"></ul>
+  <h3 data-t="ayudaPenal"></h3>
+  <ul class="leyenda" id="ayMalas"></ul>
+  <p class="nota" id="ayLimite"></p>
+  <div class="acciones"><button type="button" class="boton principal" data-cerrar data-t="cerrar"></button></div>
+</dialog>
+
+<dialog class="hoja" id="dlgCausa" aria-labelledby="cauT">
+  <h2 id="cauT" data-t="causaTitulo"></h2>
+  <div id="cauCuerpo"></div>
+  <p class="nota" data-t="causaNota"></p>
+  <div class="acciones"><button type="button" class="boton principal" data-cerrar data-t="cerrar"></button></div>
+</dialog>
+
+<dialog class="hoja" id="dlgFinal" aria-labelledby="finT">
+  <div class="vidriera chica"><canvas id="finalRoseton" width="10" height="10" aria-hidden="true"></canvas></div>
+  <h2 id="finT" data-t="finalTitulo"></h2>
+  <p id="finTexto"></p>
+  <div class="acciones"><button type="button" class="boton principal" id="btnFinalMapa" data-t="finalBoton"></button></div>
+</dialog>
+
+<div class="tostada" id="tostada" role="status" aria-live="polite" hidden></div>
+
+<noscript><p class="noscript">Vitraluz necesita JavaScript para funcionar. / Vitraluz needs JavaScript to run.</p></noscript>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
