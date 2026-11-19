@@ -1,4 +1,4 @@
-// Bocetos de los nueve proyectos, dibujados a mano en SVG (sin imágenes).
+// Bocetos de los diez proyectos, dibujados a mano en SVG (sin imágenes).
 // Clases de trazo, definidas en sitio/cuaderno.css:
 //   .t      tinta, trazo principal        .fino   tinta, trazo fino
 //   .lapiz  grafito discontinuo           .rojo   lápiz rojo (cotas y flechas)
@@ -424,6 +424,46 @@ export function bocetoCurriculum() {
   return lienzo(cuerpo, 'Boceto: una hoja de currículum con foto, nombre y secciones, hojas apiladas detrás, marcas de corte de imprenta y un sello', 'Sketch: a résumé sheet with photo, name and sections, sheets stacked behind, printer crop marks and a stamp');
 }
 
+/* ---------- Bloques: muro de bloques como vidriera, bola con estela y pala ---------- */
+
+export function bocetoBloques() {
+  // Vidriera: ojiva con plomos; los bloques son los vidrios
+  const bx = 96, by = 46, w = 34, h = 18, g = 4;
+  let bloques = '';
+  for (let f = 0; f < 4; f++) {
+    for (let c = 0; c < 6; c++) {
+      if (f === 2 && c === 3) continue; // hueco: bloque roto por la bola
+      if (f === 3 && c === 1) continue;
+      const x = bx + c * (w + g), y = by + f * (h + g);
+      bloques += `<rect class="t ${(f + c) % 3 === 0 ? 'vidrio' : 'papelito'}" pathLength="1" x="${x}" y="${y}" width="${w}" height="${h}" rx="2"/>`;
+      if ((f * 6 + c) % 4 === 1) bloques += `<path class="fino" pathLength="1" d="M${x + 6},${y + 5} h${w - 14} M${x + 6},${y + 10} h${w - 22}"/>`;
+    }
+  }
+  // Rayos de luz que atraviesan el muro
+  const rayos = `<path class="lapiz" d="M60,26 L120,150 M96,22 L170,150 M268,22 L226,150 M308,30 L262,150"/>`;
+  // Fragmentos del bloque roto
+  const fragmentos =
+    `<path class="fino" pathLength="1" d="M198,104 l8,-4 l4,8 l-9,3 Z M214,114 l7,2 l-3,7 l-7,-2 Z"/>`;
+  // Bola, estela y rebote
+  const bola =
+    `<circle class="t papelito" pathLength="1" cx="172" cy="170" r="7"/>` +
+    `<path class="lapiz" d="M118,234 L160,182 M236,222 L184,178"/>` +
+    `<path class="rojo" d="M184,160 L200,128 M194,131 l6,-3 l1,7"/>`;
+  // Pala
+  const pala = `<path class="t fondo" pathLength="1" d="M128,226 H216 Q222,226 222,232 Q222,238 216,238 H128 Q122,238 122,232 Q122,226 128,226 Z"/>`;
+  // Cota del muro y mejoras que caen
+  const cota = `<path class="rojo" d="M86,44 V114 M82,50 l4,-6 l4,6 M82,108 l4,6 l4,-6"/>`;
+  const mejoras =
+    `<circle class="fino" pathLength="1" cx="292" cy="112" r="8"/><path class="fino" pathLength="1" d="M292,108 v8 M288,112 h8"/>` +
+    `<path class="lapiz" d="M292,84 V102"/>`;
+  const cuerpo =
+    rayos + bloques + fragmentos + cota + mejoras + bola + pala +
+    rot(8, 82, '100 niveles', '100 levels', 'start', 'rot rot-rojo') +
+    rot(300, 148, 'mejoras', 'power-ups', 'middle') +
+    rot(172, 14, 'vidriera de luz', 'light stained glass', 'middle');
+  return lienzo(cuerpo, 'Boceto: un muro de bloques como vidrios con plomos, rayos de luz, una bola con su estela rebotando contra la pala y una mejora que cae', 'Sketch: a wall of blocks like leaded glass panes, rays of light, a ball with its trail bouncing off the paddle and a power-up falling');
+}
+
 export const bocetos = {
   gastos: bocetoGastos,
   kanban: bocetoKanban,
@@ -434,4 +474,5 @@ export const bocetos = {
   escaner: bocetoEscaner,
   pizza: bocetoPizza,
   curriculum: bocetoCurriculum,
+  bloques: bocetoBloques,
 };
