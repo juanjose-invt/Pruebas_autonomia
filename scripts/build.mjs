@@ -19,8 +19,8 @@ const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
 const iSalida = args.indexOf('--salida');
 const SALIDA = path.resolve(RAIZ, iSalida >= 0 && args[iSalida + 1] ? args[iSalida + 1] : '_site');
-// Cuatro apps por tanda (la novena es la tercera). Si una carpeta no existe, se omite sin fallar.
-const APPS = ['gastos', 'kanban', 'juego', 'herramientas', 'presupuestos', 'panel', 'escaner', 'pizza', 'curriculum'];
+// Apps que se copian al sitio. Si una carpeta no existe, se omite sin fallar.
+const APPS = ['gastos', 'kanban', 'juego', 'herramientas', 'presupuestos', 'panel', 'escaner', 'pizza', 'curriculum', 'bloques'];
 const ARCHIVO_PERFIL = 'contenido/perfil.md';
 
 /* ---------- Textos fijos del sitio ---------- */
@@ -90,6 +90,11 @@ const PROYECTOS = [
     id: 'curriculum',
     es: { nombre: 'Currículum', texto: 'Creador de currículums para buscar trabajo en España o en el extranjero: plantillas genéricas, europeas y por sectores, una guía interactiva inicial y exportación a PDF. Estética de papelería de imprenta.', abrir: 'Abrir Currículum' },
     en: { nombre: 'Résumé', texto: 'A résumé builder for job hunting in Spain or abroad: generic, European and sector-specific templates, an interactive starting guide and PDF export. Printer\'s stationery look.', abrir: 'Open Résumé' },
+  },
+  {
+    id: 'bloques',
+    es: { nombre: 'Bloques', texto: 'Juego de romper bloques con bolas y mejoras durante la partida, con 100 niveles y estética de vidriera de luz. Nace con la intención de destinar lo recaudado con anuncios a la lucha contra el cáncer; todavía no está activo.', abrir: 'Abrir Bloques' },
+    en: { nombre: 'Blocks', texto: 'A block-breaking game with balls and power-ups during play, 100 levels and a light stained-glass look. It is born with the intention of devoting what ads raise to the fight against cancer; this is not active yet.', abrir: 'Open Blocks' },
   },
 ];
 const PRIMERA_TANDA = 4; // cuántos proyectos van en el primer grupo de la página Proyectos
@@ -305,8 +310,8 @@ function paginaInicio(perfil, entradas) {
 <div class="portada-texto">
 <h1>${bi('Cuaderno de campo', 'Field notebook')}</h1>
 <p class="entradilla">${bi(
-      'Aquí se guardan nueve proyectos hechos con código, un blog y unas páginas que todavía están por escribir.',
-      'This notebook holds nine projects made with code, a blog and a few pages that are still to be written.',
+      'Aquí se guardan diez proyectos hechos con código, un blog y unas páginas que todavía están por escribir.',
+      'This notebook holds ten projects made with code, a blog and a few pages that are still to be written.',
     )}</p>
 <dl class="ficha">
 <dt>${bi('Este cuaderno es de', 'This notebook belongs to')}</dt><dd>${lineaCampo(perfil.nombre)}</dd>
@@ -346,7 +351,7 @@ function paginaProyectos() {
     seccion: 'proyectos',
     tituloEs: 'Proyectos',
     tituloEn: 'Projects',
-    descripcion: 'Nueve aplicaciones web: gastos, kanban, juego de canicas, caja de herramientas, presupuestos, panel de datos, escáner, masas de pizza y currículums.',
+    descripcion: 'Diez aplicaciones web: gastos, kanban, juego de canicas, caja de herramientas, presupuestos, panel de datos, escáner, masas de pizza, currículums y juego de bloques.',
     numero: 2,
     cuerpo: `<div class="columna">
 <h1>${bi('Proyectos', 'Projects')}</h1>
@@ -356,8 +361,8 @@ function paginaProyectos() {
       'p',
     )}</aside>
 <p class="entradilla">${bi(
-      'Nueve aplicaciones web que viven en este mismo repositorio. Funcionan en el navegador, sin servidor, y están pensadas para usarse con el dedo en una tablet.',
-      'Nine web apps that live in this same repository. They run in the browser, with no server, and are meant to be used by touch on a tablet.',
+      'Diez aplicaciones web que viven en este mismo repositorio. Funcionan en el navegador, sin servidor, y están pensadas para usarse con el dedo en una tablet.',
+      'Ten web apps that live in this same repository. They run in the browser, with no server, and are meant to be used by touch on a tablet.',
     )}</p>
 </div>
 <div class="laminas">
@@ -372,7 +377,7 @@ ${segunda}
 </section>
 ${tercera ? `<section class="tanda" aria-labelledby="tercera-tanda">
 <h2 id="tercera-tanda">${bi('Tercera tanda', 'Third batch')}</h2>
-<p>${bi('Una aplicación más, con el mismo método: web estática, sin servidor y con los datos en el propio dispositivo.', 'One more app, built the same way: static web, no server, and data kept on the device itself.')}</p>
+<p>${bi('Dos aplicaciones más, con el mismo método: web estática, sin servidor y con los datos en el propio dispositivo.', 'Two more apps, built the same way: static web, no server, and data kept on the device itself.')}</p>
 <div class="laminas">
 ${tercera}
 </div>
