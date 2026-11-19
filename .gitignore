@@ -2,3 +2,5 @@
 _site/
 node_modules/
 .DS_Store
+# Copias de trabajo aisladas de los agentes
+.claude/worktrees/
