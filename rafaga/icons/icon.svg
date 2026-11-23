@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6f9"/><stop offset="1" stop-color="#ffd3e2"/></linearGradient>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb0c4"/><stop offset=".5" stop-color="#ff5c79"/><stop offset="1" stop-color="#e2405f"/></linearGradient>
+    <linearGradient id="h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset=".5" stop-color="#ffcf45"/><stop offset="1" stop-color="#f0ae25"/></linearGradient>
+    <radialGradient id="c" cx=".35" cy=".3" r=".75"><stop offset="0" stop-color="#fff"/><stop offset=".55" stop-color="#fff"/><stop offset="1" stop-color="#ffc2d6"/></radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#f)"/>
+  <rect x="236" y="86" width="190" height="190" rx="46" fill="url(#g)" stroke="#a8304f" stroke-width="8" stroke-opacity=".6"/>
+  <ellipse cx="300" cy="128" rx="44" ry="17" transform="rotate(-28 300 128)" fill="#fff" fill-opacity=".65"/>
+  <text x="331" y="222" text-anchor="middle" font-family="Baloo 2, Trebuchet MS, sans-serif" font-weight="800" font-size="120" fill="#fff" stroke="#3d1638" stroke-width="14" paint-order="stroke fill">3</text>
+  <path d="M86 300 L196 186 L196 300 Z" fill="url(#h)" stroke="#b77d12" stroke-width="7" stroke-linejoin="round" stroke-opacity=".6"/>
+  <g fill="#fff" stroke="#3d1638" stroke-width="5">
+    <circle cx="172" cy="420" r="11"/><circle cx="206" cy="384" r="11"/><circle cx="240" cy="348" r="11"/>
+  </g>
+  <circle cx="132" cy="446" r="34" fill="url(#c)" stroke="#3d1638" stroke-width="7"/>
+  <circle cx="120" cy="434" r="8" fill="#fff"/>
+</svg>
