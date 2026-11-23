@@ -1,4 +1,4 @@
-// Bocetos de los diez proyectos, dibujados a mano en SVG (sin imágenes).
+// Bocetos de los once proyectos, dibujados a mano en SVG (sin imágenes).
 // Clases de trazo, definidas en sitio/cuaderno.css:
 //   .t      tinta, trazo principal        .fino   tinta, trazo fino
 //   .lapiz  grafito discontinuo           .rojo   lápiz rojo (cotas y flechas)
@@ -464,6 +464,37 @@ export function bocetoBloques() {
   return lienzo(cuerpo, 'Boceto: un muro de bloques como vidrios con plomos, rayos de luz, una bola con su estela rebotando contra la pala y una mejora que cae', 'Sketch: a wall of blocks like leaded glass panes, rays of light, a ball with its trail bouncing off the paddle and a power-up falling');
 }
 
+/* ---------- Ráfaga: abanico de bolas lanzadas contra bloques numerados, con gominolas ---------- */
+
+export function bocetoRafaga() {
+  // Rejilla de bloques con su número (gominolas: esquinas muy redondas)
+  const nums = [[9, 12, 7, 15], [6, 0, 11, 4], [0, 8, 0, 10]];
+  const bx = 100, by = 40, w = 40, h = 28, g = 6;
+  let bloques = '';
+  nums.forEach((fila, f) => fila.forEach((v, c) => {
+    if (!v) return;
+    const x = bx + c * (w + g), y = by + f * (h + g);
+    bloques += `<rect class="t ${(f + c) % 2 ? 'vidrio' : 'papelito'}" pathLength="1" x="${x}" y="${y}" width="${w}" height="${h}" rx="11"/>` +
+      `<text x="${x + w / 2}" y="${y + 19}" text-anchor="middle" class="rot rot-num">${v}</text>`;
+  }));
+  // Bolas en ráfaga: una fila de bolas que sale del punto de lanzamiento
+  let bolas = '';
+  const ox = 180, oy = 226;
+  for (let k = 0; k < 6; k++) {
+    const t = 0.18 + k * 0.13;
+    bolas += `<circle class="t papelito" pathLength="1" cx="${n(ox + (232 - ox) * t * 1.6)}" cy="${n(oy - 118 * t * 1.45)}" r="${k === 5 ? 6 : 5}"/>`;
+  }
+  const apuntar = `<path class="lapiz" d="M${ox},${oy} L276,112"/><path class="rojo" d="M262,152 L276,112 M264,122 l12,-10 l2,15"/>`;
+  const suelo = `<path class="t" pathLength="1" d="M70,238 H300"/><circle class="t vidrio" pathLength="1" cx="${ox}" cy="${oy + 3}" r="9"/>`;
+  const cota = `<path class="rojo" d="M92,40 V122 M88,46 l4,-6 l4,6 M88,116 l4,6 l4,-6"/>`;
+  const cuerpo =
+    bloques + cota + apuntar + bolas + suelo +
+    rot(8, 80, '100 niveles', '100 levels', 'start', 'rot rot-rojo') +
+    rot(300, 196, 'ráfaga', 'volley', 'middle') +
+    rot(180, 20, 'gominolas numeradas', 'numbered gumdrops', 'middle');
+  return lienzo(cuerpo, 'Boceto: bloques redondeados como gominolas con números, una línea de apuntado y una ráfaga de bolas que sale desde abajo', 'Sketch: rounded gumdrop blocks with numbers, an aiming line and a volley of balls leaving from below');
+}
+
 export const bocetos = {
   gastos: bocetoGastos,
   kanban: bocetoKanban,
@@ -475,4 +506,5 @@ export const bocetos = {
   pizza: bocetoPizza,
   curriculum: bocetoCurriculum,
   bloques: bocetoBloques,
+  rafaga: bocetoRafaga,
 };
